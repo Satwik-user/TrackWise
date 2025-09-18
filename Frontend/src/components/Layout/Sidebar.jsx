@@ -1,79 +1,91 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  HomeIcon,
+  MapIcon,
+  TruckIcon,
+  ChartBarIcon,
+  CpuChipIcon,
+  EyeIcon,
+  CogIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon
+} from '@heroicons/react/24/outline';
 
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: '📊' },
-  { name: 'Trains', href: '/trains', icon: '🚂' },
-  { name: 'Sections', href: '/sections', icon: '🛤️' },
-  { name: 'Optimization', href: '/optimization', icon: '⚡' },
-  { name: 'Analytics', href: '/analytics', icon: '📈' },
-  { name: 'Real-time View', href: '/realtime', icon: '👁️' },
-  { name: 'Settings', href: '/settings', icon: '⚙️' },
-];
-
-const Sidebar = ({ open, setOpen }) => {
+const Sidebar = () => {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const navigate = useNavigate();
   const location = useLocation();
 
-  const SidebarContent = () => (
-    <div className="flex flex-col h-0 flex-1 bg-gray-800">
-      <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
-        <div className="flex items-center flex-shrink-0 px-4">
-          <span className="text-white text-xl font-bold">🚂 TrackWise</span>
-        </div>
-        <nav className="mt-5 flex-1 px-2 space-y-1">
-          {navigation.map((item) => {
-            const isActive = location.pathname === item.href;
-            return (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={`${
-                  isActive
-                    ? 'bg-gray-900 text-white'
-                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                } group flex items-center px-2 py-2 text-sm font-medium rounded-md`}
-                onClick={() => setOpen(false)}
-              >
-                <span className="mr-3 flex-shrink-0 h-6 w-6 text-lg">
-                  {item.icon}
-                </span>
-                {item.name}
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
-    </div>
-  );
+  const navigationItems = [
+    { id: 'dashboard', name: 'Dashboard', icon: HomeIcon, path: '/' },
+    { id: 'sections', name: 'Sections', icon: MapIcon, path: '/sections' },
+    { id: 'trains', name: 'Train Management', icon: TruckIcon, path: '/trains' },
+    { id: 'analytics', name: 'Analytics', icon: ChartBarIcon, path: '/analytics' },
+    { id: 'optimization', name: 'Optimization Center', icon: CpuChipIcon, path: '/optimization' },
+    { id: 'realtime', name: 'Real-time View', icon: EyeIcon, path: '/realtime' },
+    { id: 'settings', name: 'Settings', icon: CogIcon, path: '/settings' }
+  ];
+
+  const isActive = (path) => location.pathname === path;
 
   return (
-    <>
-      {/* Mobile sidebar */}
-      {open && (
-        <div className="relative z-40 md:hidden">
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setOpen(false)} />
-          <div className="fixed inset-0 flex z-40">
-            <div className="relative flex-1 flex flex-col max-w-xs w-full bg-gray-800">
-              <div className="absolute top-0 right-0 -mr-12 pt-2">
-                <button
-                  type="button"
-                  className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-                  onClick={() => setOpen(false)}
-                >
-                  ✕
-                </button>
+    <div className={`${isCollapsed ? 'w-16' : 'w-64'} bg-gray-900 text-white transition-all duration-300 flex flex-col`}>
+      {/* Header */}
+      <div className="p-4 border-b border-gray-700">
+        <div className="flex items-center justify-between">
+          {!isCollapsed && (
+            <div className="flex items-center">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold">TW</span>
               </div>
-              <SidebarContent />
+              <span className="ml-3 text-xl font-semibold">TrackWise</span>
             </div>
+          )}
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="p-1 rounded-md hover:bg-gray-700"
+          >
+            {isCollapsed ? (
+              <ChevronRightIcon className="h-5 w-5" />
+            ) : (
+              <ChevronLeftIcon className="h-5 w-5" />
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 px-4 py-6 space-y-2">
+        {navigationItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.id}
+              onClick={() => navigate(item.path)}
+              className={`w-full flex items-center px-3 py-2 rounded-lg text-left transition-colors ${
+                isActive(item.path)
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+              }`}
+            >
+              <Icon className="h-5 w-5 flex-shrink-0" />
+              {!isCollapsed && <span className="ml-3">{item.name}</span>}
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* System Status */}
+      <div className="p-4 border-t border-gray-700">
+        <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
+          <div className="flex items-center">
+            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+            {!isCollapsed && <span className="ml-2 text-sm text-gray-300">System Online</span>}
           </div>
         </div>
-      )}
-
-      {/* Static sidebar for desktop */}
-      <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
-        <SidebarContent />
       </div>
-    </>
+    </div>
   );
 };
 

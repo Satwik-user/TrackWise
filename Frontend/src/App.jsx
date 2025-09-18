@@ -18,6 +18,8 @@ import Settings from './pages/Settings';
 // Services
 import { authService } from './services/authService';
 
+import './App.css';
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
