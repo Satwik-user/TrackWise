@@ -4,7 +4,7 @@ import {
   FunnelIcon,
   XMarkIcon,
   CalendarDaysIcon,
-  TrainIcon,
+  TruckIcon,
   MapIcon,
   ExclamationTriangleIcon,
   ChevronDownIcon

@@ -5,7 +5,7 @@ import {
   MapIcon,
   ScaleIcon,
   BoltIcon,
-  TrainIcon,
+  TruckIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
   ClockIcon,

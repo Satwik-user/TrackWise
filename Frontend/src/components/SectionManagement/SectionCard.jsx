@@ -5,7 +5,7 @@ import {
   ExclamationTriangleIcon,
   CheckCircleIcon,
   WrenchScrewdriverIcon,
-  TrainIcon,
+  TruckIcon,
   BoltIcon,
   ScaleIcon,
   EyeIcon,
@@ -27,7 +27,7 @@ const SectionCard = ({
   const getStatusIcon = () => {
     if (section.maintenance_mode) return WrenchScrewdriverIcon;
     if (!section.is_active) return ExclamationTriangleIcon;
-    if (section.current_occupancy >= section.max_occupancy) return TrainIcon;
+    if (section.current_occupancy >= section.max_occupancy) return TruckIcon;
     return CheckCircleIcon;
   };
 
@@ -150,7 +150,7 @@ const SectionCard = ({
           </div>
 
           <div className="text-center p-2 bg-gray-50 rounded">
-            <TrainIcon className="h-4 w-4 mx-auto mb-1 text-gray-400" />
+            <TruckIcon className="h-4 w-4 mx-auto mb-1 text-gray-400" />
             <p className="text-gray-500 text-xs">Capacity</p>
             <p className="font-medium text-gray-900">{section.max_occupancy}</p>
           </div>
@@ -225,7 +225,7 @@ const SectionCard = ({
 
           {section.current_occupancy >= section.max_occupancy && !section.maintenance_mode && (
             <div className="flex items-center text-xs text-yellow-600 bg-yellow-50 px-2 py-1 rounded mb-2">
-              <TrainIcon className="h-3 w-3 mr-1" />
+              <TruckIcon className="h-3 w-3 mr-1" />
               <span>At Capacity</span>
             </div>
           )}

@@ -4,7 +4,7 @@ import {
   CpuChipIcon,
   AdjustmentsHorizontalIcon,
   ClockIcon,
-  TrainIcon,
+  TruckIcon,
   MapIcon,
   ChartBarIcon,
   ExclamationTriangleIcon,
@@ -436,7 +436,7 @@ const TrainSelectionPanel = ({
       <div className="card-header">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-medium text-gray-900 flex items-center">
-            <TrainIcon className="h-5 w-5 mr-2" />
+            <TruckIcon className="h-5 w-5 mr-2" />
             Select Trains
           </h3>
           <span className="text-sm text-gray-500">

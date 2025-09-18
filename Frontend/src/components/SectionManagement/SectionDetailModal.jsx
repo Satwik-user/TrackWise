@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   XMarkIcon,
   MapIcon,
-  TrainIcon,
+  TruckIcon,
   ScaleIcon,
   BoltIcon,
   WrenchScrewdriverIcon,
@@ -39,7 +39,7 @@ const SectionDetailModal = ({
   const getStatusIcon = () => {
     if (section.maintenance_mode) return WrenchScrewdriverIcon;
     if (!section.is_active) return ExclamationTriangleIcon;
-    if (section.current_occupancy >= section.max_occupancy) return TrainIcon;
+    if (section.current_occupancy >= section.max_occupancy) return TruckIcon;
     return CheckCircleIcon;
   };
 
@@ -162,7 +162,7 @@ const SectionDetailModal = ({
             </div>
             
             <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <TrainIcon className="h-5 w-5 mx-auto mb-1 text-gray-400" />
+              <TruckIcon className="h-5 w-5 mx-auto mb-1 text-gray-400" />
               <p className="text-sm text-gray-500">Capacity</p>
               <p className="font-semibold text-gray-900">{section.current_occupancy}/{section.max_occupancy}</p>
             </div>
@@ -677,7 +677,7 @@ const AnalyticsTab = ({ section }) => {
         
         <div className="card p-4">
           <div className="text-center">
-            <TrainIcon className="h-8 w-8 mx-auto mb-2 text-purple-500" />
+            <TruckIcon className="h-8 w-8 mx-auto mb-2 text-purple-500" />
             <p className="text-2xl font-bold text-gray-900">
               {mockAnalytics.trafficVolume.reduce((sum, item) => sum + item.trains, 0)}
             </p>

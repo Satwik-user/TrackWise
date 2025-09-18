@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import {
-  TrainIcon,
+  TruckIcon,
   MapPinIcon,
   ClockIcon,
   ExclamationTriangleIcon,
@@ -129,7 +129,7 @@ const TrainCard = ({
         {/* Header */}
         <div className="mb-3">
           <div className="flex items-center space-x-2 mb-1">
-            <TrainIcon className="h-5 w-5 text-gray-400" />
+            <TruckIcon className="h-5 w-5 text-gray-400" />
             <h3 className="text-lg font-semibold text-gray-900 truncate">
               {train.train_number}
             </h3>

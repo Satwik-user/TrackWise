@@ -1,154 +1,79 @@
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
-import { useAppStore } from '../../store/appStore';
-import {
-  HomeIcon,
-  TrainIcon,
-  MapIcon,
-  CpuChipIcon,
-  ChartBarIcon,
-  EyeIcon,
-  BeakerIcon,
-  CogIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon
-} from '@heroicons/react/24/outline';
+import { Link, useLocation } from 'react-router-dom';
 
-const navigationItems = [
-  {
-    name: 'Dashboard',
-    href: '/dashboard',
-    icon: HomeIcon,
-    description: 'Overview and system status'
-  },
-  {
-    name: 'Real-time View',
-    href: '/real-time',
-    icon: EyeIcon,
-    description: 'Live train positions and status'
-  },
-  {
-    name: 'Train Management',
-    href: '/trains',
-    icon: TrainIcon,
-    description: 'Manage trains and schedules'
-  },
-  {
-    name: 'Section Management',
-    href: '/sections',
-    icon: MapIcon,
-    description: 'Manage railway sections'
-  },
-  {
-    name: 'Optimization',
-    href: '/optimization',
-    icon: CpuChipIcon,
-    description: 'Traffic optimization center'
-  },
-  {
-    name: 'Analytics',
-    href: '/analytics',
-    icon: ChartBarIcon,
-    description: 'Performance analytics'
-  },
-  {
-    name: 'Simulation',
-    href: '/simulation',
-    icon: BeakerIcon,
-    description: 'Traffic simulation scenarios'
-  },
-  {
-    name: 'Settings',
-    href: '/settings',
-    icon: CogIcon,
-    description: 'System configuration'
-  }
+const navigation = [
+  { name: 'Dashboard', href: '/dashboard', icon: '📊' },
+  { name: 'Trains', href: '/trains', icon: '🚂' },
+  { name: 'Sections', href: '/sections', icon: '🛤️' },
+  { name: 'Optimization', href: '/optimization', icon: '⚡' },
+  { name: 'Analytics', href: '/analytics', icon: '📈' },
+  { name: 'Real-time View', href: '/realtime', icon: '👁️' },
+  { name: 'Settings', href: '/settings', icon: '⚙️' },
 ];
 
-const Sidebar = () => {
-  const { sidebarOpen, setSidebarOpen } = useAppStore();
+const Sidebar = ({ open, setOpen }) => {
   const location = useLocation();
 
-  return (
-    <div className={`fixed left-0 top-16 h-full bg-white border-r border-gray-200 transition-all duration-300 z-30 ${
-      sidebarOpen ? 'w-64' : 'w-16'
-    }`}>
-      {/* Sidebar header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        {sidebarOpen && (
-          <div className="flex items-center">
-            <h2 className="text-lg font-semibold text-gray-900">Navigation</h2>
-          </div>
-        )}
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-1 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 transition-colors"
-        >
-          {sidebarOpen ? (
-            <ChevronLeftIcon className="h-5 w-5" />
-          ) : (
-            <ChevronRightIcon className="h-5 w-5" />
-          )}
-        </button>
-      </div>
-
-      {/* Navigation items */}
-      <nav className="flex-1 p-4 space-y-2">
-        {navigationItems.map((item) => {
-          const isActive = location.pathname === item.href;
-          
-          return (
-            <NavLink
-              key={item.name}
-              to={item.href}
-              className={({ isActive }) =>
-                `flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 group ${
+  const SidebarContent = () => (
+    <div className="flex flex-col h-0 flex-1 bg-gray-800">
+      <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
+        <div className="flex items-center flex-shrink-0 px-4">
+          <span className="text-white text-xl font-bold">🚂 TrackWise</span>
+        </div>
+        <nav className="mt-5 flex-1 px-2 space-y-1">
+          {navigation.map((item) => {
+            const isActive = location.pathname === item.href;
+            return (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={`${
                   isActive
-                    ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                }`
-              }
-              title={!sidebarOpen ? `${item.name}: ${item.description}` : ''}
-            >
-              <item.icon
-                className={`flex-shrink-0 h-5 w-5 ${
-                  isActive ? 'text-blue-700' : 'text-gray-400 group-hover:text-gray-500'
-                }`}
-              />
-              {sidebarOpen && (
-                <div className="ml-3 flex-1">
-                  <div className="text-sm font-medium">{item.name}</div>
-                  <div className="text-xs text-gray-500 mt-0.5 line-clamp-1">
-                    {item.description}
-                  </div>
-                </div>
-              )}
-            </NavLink>
-          );
-        })}
-      </nav>
+                    ? 'bg-gray-900 text-white'
+                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                } group flex items-center px-2 py-2 text-sm font-medium rounded-md`}
+                onClick={() => setOpen(false)}
+              >
+                <span className="mr-3 flex-shrink-0 h-6 w-6 text-lg">
+                  {item.icon}
+                </span>
+                {item.name}
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+    </div>
+  );
 
-      {/* Sidebar footer */}
-      {sidebarOpen && (
-        <div className="p-4 border-t border-gray-200">
-          <div className="bg-blue-50 rounded-lg p-3">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <CpuChipIcon className="h-6 w-6 text-blue-600" />
+  return (
+    <>
+      {/* Mobile sidebar */}
+      {open && (
+        <div className="relative z-40 md:hidden">
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setOpen(false)} />
+          <div className="fixed inset-0 flex z-40">
+            <div className="relative flex-1 flex flex-col max-w-xs w-full bg-gray-800">
+              <div className="absolute top-0 right-0 -mr-12 pt-2">
+                <button
+                  type="button"
+                  className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                  onClick={() => setOpen(false)}
+                >
+                  ✕
+                </button>
               </div>
-              <div className="ml-3 flex-1">
-                <p className="text-sm font-medium text-blue-900">
-                  System Status
-                </p>
-                <p className="text-xs text-blue-700">
-                  All systems operational
-                </p>
-              </div>
+              <SidebarContent />
             </div>
           </div>
         </div>
       )}
-    </div>
+
+      {/* Static sidebar for desktop */}
+      <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
+        <SidebarContent />
+      </div>
+    </>
   );
 };
 

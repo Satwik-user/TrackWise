@@ -1,0 +1,32 @@
+{
+  "name": "trackwise-fullstack",
+  "version": "1.0.0",
+  "description": "TrackWise Railway Optimization System - Full Stack",
+  "private": true,
+  "scripts": {
+    "start": "python start_trackwise.py",
+    "start:quick": "./quick_start.sh",
+    "start:backend": "cd backend && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload",
+    "start:frontend": "cd Frontend && npm start",
+    "install:all": "pip install -r requirements.txt && cd Frontend && npm install",
+    "build": "cd Frontend && npm run build",
+    "test": "cd backend && python -m pytest && cd ../Frontend && npm test",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "lint": "cd Frontend && npm run lint",
+    "format": "cd backend && black . && cd ../Frontend && npm run format"
+  },
+  "keywords": [
+    "railway",
+    "optimization",
+    "fastapi",
+    "react",
+    "machine-learning"
+  ],
+  "author": "TrackWise Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0",
+    "python": ">=3.8.0"
+  }
+}

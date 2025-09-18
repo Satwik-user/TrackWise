@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChartBarIcon,
   ClockIcon,
-  TrendingUpIcon,
+  ArrowTrendingUpIcon,
   DocumentArrowDownIcon,
   CalendarDaysIcon,
   AdjustmentsHorizontalIcon,
@@ -145,7 +145,7 @@ const Analytics = () => {
     {
       id: 'throughput',
       label: 'Throughput',
-      icon: TrendingUpIcon,
+      icon: ArrowTrendingUpIcon,
       description: 'Traffic throughput trends'
     },
     {
@@ -464,7 +464,7 @@ const OverviewPanel = ({
           title="System Utilization"
           value={`${performanceData?.capacity_metrics?.utilization_percentage?.toFixed(1) || 0}%`}
           change={-3}
-          icon={TrendingUpIcon}
+          icon={ArrowTrendingUpIcon}
           color="purple"
         />
       </div>
@@ -525,7 +525,7 @@ const SummaryMetricCard = ({ title, value, change, icon: Icon, color }) => {
           <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
           {change !== undefined && (
             <div className={`flex items-center mt-2 text-sm ${changeColor}`}>
-              <TrendingUpIcon 
+              <ArrowTrendingUpIcon 
                 className={`h-4 w-4 mr-1 ${!isPositive ? 'transform rotate-180' : ''}`} 
               />
               <span>{Math.abs(change)}%</span>

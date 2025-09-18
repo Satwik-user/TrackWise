@@ -1,0 +1,69 @@
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
+class AuthService {
+  async login(credentials) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          username: credentials.username,
+          password: credentials.password,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Login failed' }));
+        throw new Error(errorData.detail || errorData.message || 'Login failed');
+      }
+
+      const data = await response.json();
+      
+      // Store token
+      localStorage.setItem('token', data.access_token);
+      
+      // Get user info
+      const userResponse = await fetch(`${API_BASE_URL}/api/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${data.access_token}`
+        }
+      });
+
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        return { ...data, user: userData };
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
+  }
+
+  async logout() {
+    localStorage.removeItem('token');
+    try {
+      await fetch(`${API_BASE_URL}/api/auth/logout`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  }
+
+  getToken() {
+    return localStorage.getItem('token');
+  }
+
+  isAuthenticated() {
+    return !!this.getToken();
+  }
+}
+
+export const authService = new AuthService();

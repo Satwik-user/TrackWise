@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useQuery } from 'react-query';
 import {
   XMarkIcon,
-  TrainIcon,
+  TruckIcon,
   MapPinIcon,
   ClockIcon,
   BoltIcon,
@@ -119,7 +119,7 @@ const TrainDetailModal = ({ train, onClose, onEdit, onDelete }) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className={`p-2 rounded-lg ${statusColor.split(' ')[1]}`}>
-                <TrainIcon className="h-6 w-6 text-gray-700" />
+                <TruckIcon className="h-6 w-6 text-gray-700" />
               </div>
               <div>
                 <h2 className="text-xl font-semibold text-gray-900">

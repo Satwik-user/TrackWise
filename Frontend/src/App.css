@@ -1,0 +1,543 @@
+/* TrackWise Railway Optimization System - Main Application Styles */
+
+/* CSS Reset and Base Styles */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  line-height: 1.15;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
+    'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f8fafc;
+  color: #1f2937;
+}
+
+/* Main Application Container */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-content {
+  flex: 1;
+  display: flex;
+}
+
+/* Loading States */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e5e7eb;
+  border-top: 4px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Button Styles */
+.btn {
+  @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200;
+}
+
+.btn-primary {
+  @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
+}
+
+.btn-secondary {
+  @apply bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500;
+}
+
+.btn-success {
+  @apply bg-green-600 text-white hover:bg-green-700 focus:ring-green-500;
+}
+
+.btn-warning {
+  @apply bg-yellow-600 text-white hover:bg-yellow-700 focus:ring-yellow-500;
+}
+
+.btn-danger {
+  @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+}
+
+.btn-outline {
+  @apply bg-transparent border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-gray-500;
+}
+
+.btn-sm {
+  @apply px-3 py-1.5 text-xs;
+}
+
+.btn-lg {
+  @apply px-6 py-3 text-base;
+}
+
+.btn-disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+/* Card Styles */
+.card {
+  @apply bg-white shadow rounded-lg border border-gray-200;
+}
+
+.card-header {
+  @apply px-6 py-4 border-b border-gray-200;
+}
+
+.card-content {
+  @apply px-6 py-4;
+}
+
+.card-footer {
+  @apply px-6 py-4 border-t border-gray-200 bg-gray-50;
+}
+
+/* Form Styles */
+.form-group {
+  @apply mb-4;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-gray-700 mb-2;
+}
+
+.form-input {
+  @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500;
+}
+
+.form-select {
+  @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500;
+}
+
+.form-textarea {
+  @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500;
+}
+
+.form-error {
+  @apply text-red-600 text-sm mt-1;
+}
+
+.form-help {
+  @apply text-gray-500 text-sm mt-1;
+}
+
+/* Input States */
+.input-error {
+  @apply border-red-300 focus:border-red-500 focus:ring-red-500;
+}
+
+.input-success {
+  @apply border-green-300 focus:border-green-500 focus:ring-green-500;
+}
+
+/* Table Styles */
+.table {
+  @apply w-full divide-y divide-gray-200;
+}
+
+.table-header {
+  @apply bg-gray-50;
+}
+
+.table-header th {
+  @apply px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
+}
+
+.table-body {
+  @apply bg-white divide-y divide-gray-200;
+}
+
+.table-body td {
+  @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900;
+}
+
+.table-row-hover:hover {
+  @apply bg-gray-50;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  @apply fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50;
+}
+
+.modal-content {
+  @apply relative bg-white rounded-lg shadow-xl mx-auto mt-8 max-w-lg;
+}
+
+.modal-header {
+  @apply px-6 py-4 border-b border-gray-200;
+}
+
+.modal-body {
+  @apply px-6 py-4;
+}
+
+.modal-footer {
+  @apply px-6 py-4 border-t border-gray-200 bg-gray-50;
+}
+
+/* Alert Styles */
+.alert {
+  @apply px-4 py-3 rounded-md border;
+}
+
+.alert-info {
+  @apply bg-blue-50 border-blue-200 text-blue-800;
+}
+
+.alert-success {
+  @apply bg-green-50 border-green-200 text-green-800;
+}
+
+.alert-warning {
+  @apply bg-yellow-50 border-yellow-200 text-yellow-800;
+}
+
+.alert-error {
+  @apply bg-red-50 border-red-200 text-red-800;
+}
+
+/* Badge Styles */
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.badge-gray {
+  @apply bg-gray-100 text-gray-800;
+}
+
+.badge-blue {
+  @apply bg-blue-100 text-blue-800;
+}
+
+.badge-green {
+  @apply bg-green-100 text-green-800;
+}
+
+.badge-yellow {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.badge-red {
+  @apply bg-red-100 text-red-800;
+}
+
+/* Status Indicators */
+.status-running {
+  @apply text-green-600 bg-green-100;
+}
+
+.status-delayed {
+  @apply text-yellow-600 bg-yellow-100;
+}
+
+.status-stopped {
+  @apply text-red-600 bg-red-100;
+}
+
+.status-scheduled {
+  @apply text-blue-600 bg-blue-100;
+}
+
+.status-completed {
+  @apply text-gray-600 bg-gray-100;
+}
+
+/* Progress Bar */
+.progress-bar {
+  @apply w-full bg-gray-200 rounded-full h-2;
+}
+
+.progress-fill {
+  @apply h-2 rounded-full transition-all duration-300;
+}
+
+.progress-fill-blue {
+  @apply bg-blue-600;
+}
+
+.progress-fill-green {
+  @apply bg-green-600;
+}
+
+.progress-fill-yellow {
+  @apply bg-yellow-600;
+}
+
+.progress-fill-red {
+  @apply bg-red-600;
+}
+
+/* Sidebar Styles */
+.sidebar {
+  @apply bg-gray-800 text-white w-64 min-h-screen flex flex-col;
+}
+
+.sidebar-header {
+  @apply px-6 py-4 border-b border-gray-700;
+}
+
+.sidebar-nav {
+  @apply flex-1 px-4 py-6;
+}
+
+.sidebar-link {
+  @apply flex items-center px-4 py-2 text-sm font-medium rounded-md text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-200;
+}
+
+.sidebar-link.active {
+  @apply bg-gray-900 text-white;
+}
+
+/* Header Styles */
+.header {
+  @apply bg-white shadow border-b border-gray-200 px-6 py-4;
+}
+
+.header-content {
+  @apply flex items-center justify-between;
+}
+
+.header-title {
+  @apply text-lg font-semibold text-gray-900;
+}
+
+/* Chart Container */
+.chart-container {
+  @apply bg-white p-6 rounded-lg shadow border border-gray-200;
+}
+
+.chart-title {
+  @apply text-lg font-medium text-gray-900 mb-4;
+}
+
+/* Metric Cards */
+.metric-card {
+  @apply bg-white p-6 rounded-lg shadow border border-gray-200;
+}
+
+.metric-value {
+  @apply text-3xl font-bold text-gray-900;
+}
+
+.metric-label {
+  @apply text-sm text-gray-500 mt-1;
+}
+
+.metric-change {
+  @apply text-sm font-medium mt-2;
+}
+
+.metric-change.positive {
+  @apply text-green-600;
+}
+
+.metric-change.negative {
+  @apply text-red-600;
+}
+
+/* Animation Utilities */
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+.scale-in {
+  animation: scaleIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .sidebar {
+    @apply transform -translate-x-full transition-transform duration-300 ease-in-out;
+  }
+
+  .sidebar.open {
+    @apply translate-x-0;
+  }
+
+  .modal-content {
+    @apply mx-4 mt-4;
+  }
+
+  .table-responsive {
+    @apply overflow-x-auto;
+  }
+}
+
+/* Dark Mode Support (Optional) */
+@media (prefers-color-scheme: dark) {
+  .dark-mode {
+    @apply bg-gray-900 text-gray-100;
+  }
+
+  .dark-mode .card {
+    @apply bg-gray-800 border-gray-700;
+  }
+
+  .dark-mode .form-input {
+    @apply bg-gray-800 border-gray-700 text-gray-100;
+  }
+}
+
+/* Focus Styles for Accessibility */
+.focus-visible:focus {
+  @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-full;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
+}
+
+/* Print Styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .page-break {
+    page-break-before: always;
+  }
+}
+
+/* Utility Classes */
+.pointer-events-none {
+  pointer-events: none;
+}
+
+.pointer-events-auto {
+  pointer-events: auto;
+}
+
+.select-none {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Railway Specific Styles */
+.train-status-indicator {
+  @apply w-3 h-3 rounded-full;
+}
+
+.train-running {
+  @apply bg-green-500;
+}
+
+.train-delayed {
+  @apply bg-yellow-500;
+}
+
+.train-stopped {
+  @apply bg-red-500;
+}
+
+.train-scheduled {
+  @apply bg-blue-500;
+}
+
+.section-status-bar {
+  @apply h-2 w-full rounded-full;
+}
+
+.section-available {
+  @apply bg-green-500;
+}
+
+.section-occupied {
+  @apply bg-red-500;
+}
+
+.section-maintenance {
+  @apply bg-yellow-500;
+}
+
+/* Optimization Status Colors */
+.optimization-pending {
+  @apply text-yellow-600 bg-yellow-50;
+}
+
+.optimization-running {
+  @apply text-blue-600 bg-blue-50;
+}
+
+.optimization-completed {
+  @apply text-green-600 bg-green-50;
+}
+
+.optimization-failed {
+  @apply text-red-600 bg-red-50;
+}

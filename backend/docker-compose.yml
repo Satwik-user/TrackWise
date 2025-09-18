@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: trackwise_postgres
+    environment:
+      POSTGRES_DB: trackwise_db
+      POSTGRES_USER: trackwise_user
+      POSTGRES_PASSWORD: trackwise_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trackwise_user -d trackwise_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: trackwise_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # TrackWise Application (optional - for containerized deployment)
+  trackwise:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: trackwise_app
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql+asyncpg://trackwise_user:trackwise_password@postgres:5432/trackwise_db
+      - REDIS_URL=redis://redis:6379
+      - DEBUG=true
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/__pycache__
+    restart: unless-stopped
+    command: ["python", "start_app.py"]
+
+volumes:
+  postgres_data:
+  redis_data:

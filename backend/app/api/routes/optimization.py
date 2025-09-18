@@ -1,424 +1,474 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
-from sqlalchemy.orm import Session
-from typing import List, Optional, Dict, Any
-from datetime import datetime
-import uuid
-import json
+"""
+Optimization routes for TrackWise Railway Optimization System
+"""
 
-from app.core.database import get_db
-from app.models.decision import Decision, OptimizationRun
-from app.models.train import Train
-from app.models.section import Section
-from app.schemas.optimization import (
-    OptimizationRequest,
-    OptimizationResult,
-    Decision as DecisionSchema,
-    DecisionCreate,
-    DecisionUpdate,
-    OptimizationMetrics,
-    PredictionRequest,
-    PredictionResult
-)
-from app.services.optimization_service import OptimizationService
-from app.services.decision_service import DecisionService
-from optimization.core.cp_solver import CPSolver
-from ml_models.inference.prediction_service import PredictionService
+from typing import Any, List, Optional, Dict
+from fastapi import APIRouter, Depends, HTTPException, status, Query, BackgroundTasks
+from pydantic import BaseModel, Field
+from datetime import datetime, timedelta
+from enum import Enum
+
+from app.core.security import get_current_active_user
 
 router = APIRouter()
 
-@router.post("/optimize", response_model=OptimizationResult)
-async def optimize_traffic(
-    request: OptimizationRequest,
-    background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db)
-):
-    """Run traffic optimization for given trains and sections"""
-    try:
-        # Generate unique run ID
-        run_id = f"opt_{uuid.uuid4().hex[:8]}_{int(datetime.utcnow().timestamp())}"
-        
-        # Get trains and sections from database
-        trains = db.query(Train).filter(Train.id.in_(request.train_ids)).all()
-        sections = db.query(Section).filter(Section.id.in_(request.section_ids)).all()
-        
-        if len(trains) != len(request.train_ids):
-            raise HTTPException(status_code=404, detail="Some trains not found")
-        if len(sections) != len(request.section_ids):
-            raise HTTPException(status_code=404, detail="Some sections not found")
-        
-        # Initialize optimization service
-        opt_service = OptimizationService(db)
-        
-        # Create optimization run record
-        opt_run = OptimizationRun(
-            run_id=run_id,
-            scenario_name=request.scenario_name,
-            optimization_type=request.optimization_type,
-            input_trains=[{"id": t.id, "number": t.train_number, "type": t.train_type} for t in trains],
-            input_sections=[{"id": s.id, "code": s.section_code, "length": s.length} for s in sections],
-            constraints=request.dict()
-        )
-        db.add(opt_run)
-        db.commit()
-        
-        # Run optimization
-        if request.optimization_type == "REAL_TIME":
-            result = await opt_service.optimize_real_time(trains, sections, request)
-        else:
-            result = await opt_service.optimize_batch(trains, sections, request)
-        
-        # Update optimization run with results
-        opt_run.objective_value = result.objective_value
-        opt_run.solution_status = result.solution_status
-        opt_run.solving_time = result.solving_time
-        opt_run.total_delay = result.total_delay
-        opt_run.throughput = result.throughput
-        opt_run.safety_violations = result.safety_violations
-        opt_run.decisions = [d.dict() for d in result.decisions]
-        opt_run.completed_at = datetime.utcnow()
-        
-        db.commit()
-        
-        # Store decisions in database
-        for decision_data in result.decisions:
-            decision = Decision(
-                decision_id=f"{run_id}_{decision_data.train_id}_{decision_data.section_id}",
-                train_id=decision_data.train_id,
-                section_id=decision_data.section_id,
-                decision_type=decision_data.decision_type,
-                recommendation=decision_data.recommendation,
-                confidence_score=decision_data.confidence_score,
-                reason=decision_data.reason,
-                constraints_considered=decision_data.constraints_considered,
-                alternatives=decision_data.alternatives,
-                predicted_delay_reduction=decision_data.predicted_delay_reduction,
-                predicted_throughput_gain=decision_data.predicted_throughput_gain
-            )
-            db.add(decision)
-        
-        db.commit()
-        
-        result.run_id = run_id
-        return result
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Optimization failed: {str(e)}")
 
-@router.get("/runs", response_model=List[OptimizationResult])
-async def get_optimization_runs(
-    skip: int = 0,
-    limit: int = 50,
-    scenario_name: Optional[str] = None,
-    optimization_type: Optional[str] = None,
-    db: Session = Depends(get_db)
-):
-    """Get list of optimization runs"""
-    query = db.query(OptimizationRun)
-    
-    if scenario_name:
-        query = query.filter(OptimizationRun.scenario_name.contains(scenario_name))
-    if optimization_type:
-        query = query.filter(OptimizationRun.optimization_type == optimization_type)
-    
-    runs = query.order_by(OptimizationRun.created_at.desc()).offset(skip).limit(limit).all()
-    
-    results = []
-    for run in runs:
-        decisions = db.query(Decision).filter(
-            Decision.decision_id.contains(run.run_id)
-        ).all()
-        
-        result = OptimizationResult(
-            run_id=run.run_id,
-            scenario_name=run.scenario_name,
-            optimization_type=run.optimization_type,
-            solution_status=run.solution_status or "UNKNOWN",
-            objective_value=run.objective_value,
-            solving_time=run.solving_time or 0.0,
-            total_delay=run.total_delay,
-            throughput=run.throughput,
-            safety_violations=run.safety_violations,
-            decisions=[DecisionSchema.from_orm(d) for d in decisions],
-            trains_affected=len(run.input_trains) if run.input_trains else 0,
-            sections_involved=len(run.input_sections) if run.input_sections else 0,
-            created_at=run.created_at,
-            completed_at=run.completed_at
-        )
-        results.append(result)
-    
-    return results
+class OptimizationType(str, Enum):
+    """Types of optimization"""
+    SCHEDULE_OPTIMIZATION = "schedule_optimization"
+    ROUTE_OPTIMIZATION = "route_optimization"
+    CAPACITY_OPTIMIZATION = "capacity_optimization"
+    DELAY_MINIMIZATION = "delay_minimization"
+    ENERGY_OPTIMIZATION = "energy_optimization"
 
-@router.get("/runs/{run_id}", response_model=OptimizationResult)
-async def get_optimization_run(run_id: str, db: Session = Depends(get_db)):
-    """Get specific optimization run"""
-    run = db.query(OptimizationRun).filter(OptimizationRun.run_id == run_id).first()
-    if not run:
-        raise HTTPException(status_code=404, detail="Optimization run not found")
-    
-    decisions = db.query(Decision).filter(
-        Decision.decision_id.contains(run_id)
-    ).all()
-    
-    return OptimizationResult(
-        run_id=run.run_id,
-        scenario_name=run.scenario_name,
-        optimization_type=run.optimization_type,
-        solution_status=run.solution_status or "UNKNOWN",
-        objective_value=run.objective_value,
-        solving_time=run.solving_time or 0.0,
-        total_delay=run.total_delay,
-        throughput=run.throughput,
-        safety_violations=run.safety_violations,
-        decisions=[DecisionSchema.from_orm(d) for d in decisions],
-        trains_affected=len(run.input_trains) if run.input_trains else 0,
-        sections_involved=len(run.input_sections) if run.input_sections else 0,
-        created_at=run.created_at,
-        completed_at=run.completed_at
-    )
 
-@router.get("/decisions", response_model=List[DecisionSchema])
-async def get_decisions(
-    skip: int = 0,
-    limit: int = 100,
-    status: Optional[str] = None,
-    train_id: Optional[int] = None,
-    section_id: Optional[int] = None,
-    db: Session = Depends(get_db)
-):
-    """Get list of decisions"""
-    query = db.query(Decision)
+class OptimizationStatus(str, Enum):
+    """Optimization status"""
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+
+class SolverType(str, Enum):
+    """Solver types"""
+    HEURISTIC = "heuristic"
+    LINEAR_PROGRAMMING = "linear_programming"
+    CP_SAT = "cp_sat"
+    GENETIC_ALGORITHM = "genetic_algorithm"
+
+
+class OptimizationRequest(BaseModel):
+    name: str = Field(..., description="Optimization request name")
+    optimization_type: OptimizationType
+    solver_type: SolverType = SolverType.HEURISTIC
+    time_horizon_hours: int = Field(default=24, ge=1, le=168, description="Time horizon in hours")
+    objectives: List[str] = Field(default=["minimize_delays"], description="Optimization objectives")
+    constraints: Dict[str, Any] = Field(default_factory=dict, description="Optimization constraints")
+    parameters: Dict[str, Any] = Field(default_factory=dict, description="Solver parameters")
+    train_ids: Optional[List[int]] = Field(default=None, description="Specific trains to optimize")
+    section_ids: Optional[List[int]] = Field(default=None, description="Specific sections to optimize")
+
+
+class OptimizationResponse(BaseModel):
+    id: int
+    name: str
+    optimization_type: OptimizationType
+    solver_type: SolverType
+    status: OptimizationStatus
+    progress_percentage: float
+    time_horizon_hours: int
+    objectives: List[str]
+    constraints: Dict[str, Any]
+    parameters: Dict[str, Any]
+    train_ids: Optional[List[int]]
+    section_ids: Optional[List[int]]
+    results: Optional[Dict[str, Any]]
+    metrics: Optional[Dict[str, Any]]
+    error_message: Optional[str]
+    created_at: datetime
+    started_at: Optional[datetime]
+    completed_at: Optional[datetime]
+    created_by: str
+
+    class Config:
+        from_attributes = True
+
+
+class OptimizationSummary(BaseModel):
+    id: int
+    name: str
+    optimization_type: OptimizationType
+    status: OptimizationStatus
+    progress_percentage: float
+    created_at: datetime
+    completed_at: Optional[datetime]
+    duration_seconds: Optional[float]
+
+
+class OptimizationMetrics(BaseModel):
+    total_delay_reduction: float
+    energy_savings_percentage: float
+    capacity_utilization: float
+    solution_quality: float
+    computation_time_seconds: float
+
+
+# Mock optimization runs database
+MOCK_OPTIMIZATIONS = [
+    {
+        "id": 1,
+        "name": "Morning Rush Hour Optimization",
+        "optimization_type": "schedule_optimization",
+        "solver_type": "heuristic",
+        "status": "completed",
+        "progress_percentage": 100.0,
+        "time_horizon_hours": 4,
+        "objectives": ["minimize_delays", "maximize_throughput"],
+        "constraints": {"max_speed_limit": 120, "safety_distance": 500},
+        "parameters": {"max_iterations": 1000, "convergence_threshold": 0.01},
+        "train_ids": [1, 2, 4],
+        "section_ids": [1, 2, 3],
+        "results": {
+            "optimized_schedule": [
+                {"train_id": 1, "departure_time": "08:00:00", "route": [1, 2, 3]},
+                {"train_id": 2, "departure_time": "08:15:00", "route": [2, 3, 1]},
+                {"train_id": 4, "departure_time": "08:30:00", "route": [1, 3, 2]}
+            ],
+            "total_delay_reduction": 15.5,
+            "energy_savings": 8.2
+        },
+        "metrics": {
+            "total_delay_reduction": 15.5,
+            "energy_savings_percentage": 8.2,
+            "capacity_utilization": 87.3,
+            "solution_quality": 0.94,
+            "computation_time_seconds": 45.2
+        },
+        "error_message": None,
+        "created_at": datetime.utcnow() - timedelta(hours=2),
+        "started_at": datetime.utcnow() - timedelta(hours=2),
+        "completed_at": datetime.utcnow() - timedelta(hours=1, minutes=30),
+        "created_by": "admin"
+    },
+    {
+        "id": 2,
+        "name": "Route Optimization Test",
+        "optimization_type": "route_optimization",
+        "solver_type": "linear_programming",
+        "status": "running",
+        "progress_percentage": 65.0,
+        "time_horizon_hours": 8,
+        "objectives": ["minimize_distance", "minimize_delays"],
+        "constraints": {"avoid_maintenance_sections": True},
+        "parameters": {"solver_timeout": 300},
+        "train_ids": None,
+        "section_ids": None,
+        "results": None,
+        "metrics": None,
+        "error_message": None,
+        "created_at": datetime.utcnow() - timedelta(minutes=30),
+        "started_at": datetime.utcnow() - timedelta(minutes=25),
+        "completed_at": None,
+        "created_by": "admin"
+    },
+    {
+        "id": 3,
+        "name": "Capacity Analysis",
+        "optimization_type": "capacity_optimization",
+        "solver_type": "cp_sat",
+        "status": "failed",
+        "progress_percentage": 25.0,
+        "time_horizon_hours": 12,
+        "objectives": ["maximize_capacity"],
+        "constraints": {},
+        "parameters": {},
+        "train_ids": None,
+        "section_ids": [1, 2, 3, 4, 5],
+        "results": None,
+        "metrics": None,
+        "error_message": "Solver timeout exceeded",
+        "created_at": datetime.utcnow() - timedelta(hours=1),
+        "started_at": datetime.utcnow() - timedelta(hours=1),
+        "completed_at": datetime.utcnow() - timedelta(minutes=45),
+        "created_by": "admin"
+    }
+]
+
+
+@router.get("/", response_model=List[OptimizationSummary])
+async def get_optimizations(
+    skip: int = Query(0, ge=0, description="Number of records to skip"),
+    limit: int = Query(100, ge=1, le=1000, description="Number of records to return"),
+    status: Optional[OptimizationStatus] = Query(None, description="Filter by status"),
+    optimization_type: Optional[OptimizationType] = Query(None, description="Filter by type"),
+    current_user: dict = Depends(get_current_active_user)
+) -> List[OptimizationSummary]:
+    """Get all optimization runs with optional filtering"""
     
+    optimizations = MOCK_OPTIMIZATIONS.copy()
+    
+    # Apply filters
     if status:
-        query = query.filter(Decision.status == status)
-    if train_id:
-        query = query.filter(Decision.train_id == train_id)
-    if section_id:
-        query = query.filter(Decision.section_id == section_id)
+        optimizations = [o for o in optimizations if o["status"] == status.value]
     
-    decisions = query.order_by(Decision.created_at.desc()).offset(skip).limit(limit).all()
-    return decisions
-
-@router.get("/decisions/{decision_id}", response_model=DecisionSchema)
-async def get_decision(decision_id: str, db: Session = Depends(get_db)):
-    """Get specific decision"""
-    decision = db.query(Decision).filter(Decision.decision_id == decision_id).first()
-    if not decision:
-        raise HTTPException(status_code=404, detail="Decision not found")
-    return decision
-
-@router.put("/decisions/{decision_id}", response_model=DecisionSchema)
-async def update_decision(
-    decision_id: str,
-    decision_update: DecisionUpdate,
-    controller_id: str,
-    db: Session = Depends(get_db)
-):
-    """Update decision status (approve/reject)"""
-    decision = db.query(Decision).filter(Decision.decision_id == decision_id).first()
-    if not decision:
-        raise HTTPException(status_code=404, detail="Decision not found")
+    if optimization_type:
+        optimizations = [o for o in optimizations if o["optimization_type"] == optimization_type.value]
     
-    update_data = decision_update.dict(exclude_unset=True)
+    # Apply pagination
+    optimizations = optimizations[skip: skip + limit]
     
-    # Set approval details if approving
-    if decision_update.status in ["APPROVED", "REJECTED"]:
-        update_data["approved_by"] = controller_id
-        update_data["approved_at"] = datetime.utcnow()
-    
-    for field, value in update_data.items():
-        setattr(decision, field, value)
-    
-    decision.updated_at = datetime.utcnow()
-    db.commit()
-    db.refresh(decision)
-    
-    # If approved, trigger implementation
-    if decision.status == "APPROVED":
-        decision_service = DecisionService(db)
-        await decision_service.implement_decision(decision)
-    
-    return decision
-
-@router.post("/predict", response_model=PredictionResult)
-async def predict(request: PredictionRequest, db: Session = Depends(get_db)):
-    """Make predictions using ML models"""
-    try:
-        prediction_service = PredictionService()
-        
-        # Get train and section data
-        train = db.query(Train).filter(Train.id == request.train_id).first()
-        section = db.query(Section).filter(Section.id == request.section_id).first()
-        
-        if not train:
-            raise HTTPException(status_code=404, detail="Train not found")
-        if not section:
-            raise HTTPException(status_code=404, detail="Section not found")
-        
-        # Make prediction based on type
-        if request.prediction_type == "delay":
-            result = await prediction_service.predict_delay(train, section, request.time_horizon)
-        elif request.prediction_type == "arrival":
-            result = await prediction_service.predict_arrival(train, section)
-        elif request.prediction_type == "conflict":
-            result = await prediction_service.predict_conflict(train, section, request.time_horizon)
+    # Calculate duration for completed optimizations
+    for opt in optimizations:
+        if opt["completed_at"] and opt["started_at"]:
+            duration = (opt["completed_at"] - opt["started_at"]).total_seconds()
+            opt["duration_seconds"] = duration
         else:
-            raise HTTPException(status_code=400, detail="Invalid prediction type")
-        
-        return PredictionResult(
-            train_id=request.train_id,
-            section_id=request.section_id,
-            prediction_type=request.prediction_type,
-            predicted_value=result["value"],
-            confidence_interval=result.get("confidence_interval"),
-            uncertainty=result.get("uncertainty"),
-            factors=result.get("factors", {}),
-            timestamp=datetime.utcnow()
-        )
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
+            opt["duration_seconds"] = None
+    
+    return [OptimizationSummary(**opt) for opt in optimizations]
 
-@router.get("/metrics/current", response_model=OptimizationMetrics)
-async def get_current_metrics(
-    section_ids: Optional[List[int]] = None,
-    db: Session = Depends(get_db)
-):
-    """Get current optimization metrics"""
-    try:
-        # Query trains
-        train_query = db.query(Train).filter(Train.status.in_(["RUNNING", "DELAYED", "STOPPED"]))
-        if section_ids:
-            train_query = train_query.filter(Train.current_section_id.in_(section_ids))
-        
-        trains = train_query.all()
-        
-        # Calculate metrics
-        total_trains = len(trains)
-        delayed_trains = len([t for t in trains if t.status == "DELAYED"])
-        
-        # Calculate average delay
-        total_delay = 0
-        delay_count = 0
-        for train in trains:
-            if train.actual_arrival and train.scheduled_arrival:
-                delay = (train.actual_arrival - train.scheduled_arrival).total_seconds() / 60
-                if delay > 0:
-                    total_delay += delay
-                    delay_count += 1
-        
-        avg_delay = total_delay / delay_count if delay_count > 0 else 0
-        
-        # Calculate throughput (trains per hour in last hour)
-        from datetime import timedelta
-        one_hour_ago = datetime.utcnow() - timedelta(hours=1)
-        recent_completions = db.query(Train).filter(
-            Train.status == "COMPLETED",
-            Train.actual_departure >= one_hour_ago
-        ).count()
-        
-        # Calculate capacity utilization
-        if section_ids:
-            sections = db.query(Section).filter(Section.id.in_(section_ids)).all()
-        else:
-            sections = db.query(Section).filter(Section.is_active == True).all()
-        
-        total_capacity = sum(s.max_occupancy for s in sections)
-        current_occupancy = sum(s.current_occupancy for s in sections)
-        capacity_utilization = current_occupancy / total_capacity if total_capacity > 0 else 0
-        
-        return OptimizationMetrics(
-            timestamp=datetime.utcnow(),
-            scenario="real_time",
-            avg_delay=avg_delay,
-            total_throughput=recent_completions,
-            capacity_utilization=min(capacity_utilization, 1.0),
-            on_time_performance=(total_trains - delayed_trains) / total_trains if total_trains > 0 else 1.0,
-            safety_score=1.0,  # Simplified - would need actual safety violation tracking
-            energy_efficiency=0.85,  # Placeholder
-            resource_utilization=capacity_utilization
-        )
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to calculate metrics: {str(e)}")
 
-@router.post("/simulate")
-async def simulate_scenario(
-    scenario_data: Dict[str, Any],
-    db: Session = Depends(get_db)
-):
-    """Run what-if simulation scenario"""
-    try:
-        from simulation.core.simulator import TrafficSimulator
-        
-        simulator = TrafficSimulator()
-        
-        # Extract scenario parameters
-        trains_data = scenario_data.get("trains", [])
-        sections_data = scenario_data.get("sections", [])
-        disruptions = scenario_data.get("disruptions", [])
-        duration = scenario_data.get("duration", 3600)  # Default 1 hour
-        
-        # Run simulation
-        result = await simulator.run_scenario(
-            trains_data=trains_data,
-            sections_data=sections_data,
-            disruptions=disruptions,
-            duration=duration
+@router.get("/{optimization_id}", response_model=OptimizationResponse)
+async def get_optimization(
+    optimization_id: int,
+    current_user: dict = Depends(get_current_active_user)
+) -> OptimizationResponse:
+    """Get optimization run by ID"""
+    
+    optimization = next((o for o in MOCK_OPTIMIZATIONS if o["id"] == optimization_id), None)
+    if not optimization:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Optimization with ID {optimization_id} not found"
         )
-        
-        return {
-            "scenario_id": result["scenario_id"],
-            "duration": duration,
-            "metrics": result["metrics"],
-            "events": result["events"][:100],  # Limit events for response size
-            "summary": result["summary"],
-            "timestamp": datetime.utcnow()
+    
+    return OptimizationResponse(**optimization)
+
+
+@router.post("/", response_model=OptimizationResponse)
+async def create_optimization(
+    optimization_request: OptimizationRequest,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_active_user)
+) -> OptimizationResponse:
+    """Create and start new optimization run"""
+    
+    # Create new optimization run
+    new_optimization = {
+        "id": max((o["id"] for o in MOCK_OPTIMIZATIONS), default=0) + 1,
+        "name": optimization_request.name,
+        "optimization_type": optimization_request.optimization_type.value,
+        "solver_type": optimization_request.solver_type.value,
+        "status": "pending",
+        "progress_percentage": 0.0,
+        "time_horizon_hours": optimization_request.time_horizon_hours,
+        "objectives": optimization_request.objectives,
+        "constraints": optimization_request.constraints,
+        "parameters": optimization_request.parameters,
+        "train_ids": optimization_request.train_ids,
+        "section_ids": optimization_request.section_ids,
+        "results": None,
+        "metrics": None,
+        "error_message": None,
+        "created_at": datetime.utcnow(),
+        "started_at": None,
+        "completed_at": None,
+        "created_by": current_user["username"]
+    }
+    
+    MOCK_OPTIMIZATIONS.append(new_optimization)
+    
+    # Start optimization in background
+    background_tasks.add_task(run_optimization_task, new_optimization["id"])
+    
+    return OptimizationResponse(**new_optimization)
+
+
+@router.post("/{optimization_id}/cancel")
+async def cancel_optimization(
+    optimization_id: int,
+    current_user: dict = Depends(get_current_active_user)
+) -> dict:
+    """Cancel running optimization"""
+    
+    optimization = next((o for o in MOCK_OPTIMIZATIONS if o["id"] == optimization_id), None)
+    if not optimization:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Optimization with ID {optimization_id} not found"
+        )
+    
+    if optimization["status"] not in ["pending", "running"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot cancel optimization with status: {optimization['status']}"
+        )
+    
+    optimization["status"] = "cancelled"
+    optimization["completed_at"] = datetime.utcnow()
+    
+    return {"message": f"Optimization {optimization_id} cancelled successfully"}
+
+
+@router.delete("/{optimization_id}")
+async def delete_optimization(
+    optimization_id: int,
+    current_user: dict = Depends(get_current_active_user)
+) -> dict:
+    """Delete optimization run"""
+    
+    optimization_index = next((i for i, o in enumerate(MOCK_OPTIMIZATIONS) if o["id"] == optimization_id), None)
+    if optimization_index is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Optimization with ID {optimization_id} not found"
+        )
+    
+    optimization = MOCK_OPTIMIZATIONS[optimization_index]
+    
+    # Don't allow deleting running optimizations
+    if optimization["status"] == "running":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete running optimization. Cancel it first."
+        )
+    
+    deleted_optimization = MOCK_OPTIMIZATIONS.pop(optimization_index)
+    
+    return {"message": f"Optimization '{deleted_optimization['name']}' deleted successfully"}
+
+
+@router.get("/{optimization_id}/results")
+async def get_optimization_results(
+    optimization_id: int,
+    current_user: dict = Depends(get_current_active_user)
+) -> dict:
+    """Get detailed optimization results"""
+    
+    optimization = next((o for o in MOCK_OPTIMIZATIONS if o["id"] == optimization_id), None)
+    if not optimization:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Optimization with ID {optimization_id} not found"
+        )
+    
+    if optimization["status"] != "completed":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Optimization is not completed. Status: {optimization['status']}"
+        )
+    
+    return {
+        "optimization_id": optimization_id,
+        "results": optimization.get("results", {}),
+        "metrics": optimization.get("metrics", {}),
+        "summary": {
+            "optimization_type": optimization["optimization_type"],
+            "solver_type": optimization["solver_type"],
+            "computation_time": (optimization["completed_at"] - optimization["started_at"]).total_seconds() if optimization["completed_at"] and optimization["started_at"] else None,
+            "objectives_achieved": len(optimization["objectives"]),
+            "constraints_satisfied": len(optimization["constraints"])
         }
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Simulation failed: {str(e)}")
+    }
 
-@router.get("/recommendations/{section_id}")
-async def get_recommendations(
-    section_id: int,
-    time_horizon: int = 1800,
-    db: Session = Depends(get_db)
-):
-    """Get real-time recommendations for a section"""
+
+@router.get("/{optimization_id}/metrics", response_model=OptimizationMetrics)
+async def get_optimization_metrics(
+    optimization_id: int,
+    current_user: dict = Depends(get_current_active_user)
+) -> OptimizationMetrics:
+    """Get optimization performance metrics"""
+    
+    optimization = next((o for o in MOCK_OPTIMIZATIONS if o["id"] == optimization_id), None)
+    if not optimization:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Optimization with ID {optimization_id} not found"
+        )
+    
+    if not optimization.get("metrics"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No metrics available for this optimization"
+        )
+    
+    return OptimizationMetrics(**optimization["metrics"])
+
+
+@router.get("/statistics/summary")
+async def get_optimization_summary(
+    current_user: dict = Depends(get_current_active_user)
+) -> dict:
+    """Get optimization statistics summary"""
+    
+    total_optimizations = len(MOCK_OPTIMIZATIONS)
+    completed_optimizations = len([o for o in MOCK_OPTIMIZATIONS if o["status"] == "completed"])
+    running_optimizations = len([o for o in MOCK_OPTIMIZATIONS if o["status"] == "running"])
+    failed_optimizations = len([o for o in MOCK_OPTIMIZATIONS if o["status"] == "failed"])
+    
+    # Calculate average metrics for completed optimizations
+    completed_opts = [o for o in MOCK_OPTIMIZATIONS if o["status"] == "completed" and o.get("metrics")]
+    
+    avg_delay_reduction = sum(o["metrics"]["total_delay_reduction"] for o in completed_opts) / len(completed_opts) if completed_opts else 0
+    avg_energy_savings = sum(o["metrics"]["energy_savings_percentage"] for o in completed_opts) / len(completed_opts) if completed_opts else 0
+    avg_computation_time = sum(o["metrics"]["computation_time_seconds"] for o in completed_opts) / len(completed_opts) if completed_opts else 0
+    
+    return {
+        "total_optimizations": total_optimizations,
+        "completed_optimizations": completed_optimizations,
+        "running_optimizations": running_optimizations,
+        "failed_optimizations": failed_optimizations,
+        "success_rate": (completed_optimizations / total_optimizations * 100) if total_optimizations > 0 else 0,
+        "average_delay_reduction": round(avg_delay_reduction, 2),
+        "average_energy_savings": round(avg_energy_savings, 2),
+        "average_computation_time": round(avg_computation_time, 2)
+    }
+
+
+async def run_optimization_task(optimization_id: int):
+    """Background task to simulate optimization execution"""
+    import asyncio
+    
+    optimization = next((o for o in MOCK_OPTIMIZATIONS if o["id"] == optimization_id), None)
+    if not optimization:
+        return
+    
     try:
-        section = db.query(Section).filter(Section.id == section_id).first()
-        if not section:
-            raise HTTPException(status_code=404, detail="Section not found")
+        # Start optimization
+        optimization["status"] = "running"
+        optimization["started_at"] = datetime.utcnow()
         
-        # Get trains in or approaching section
-        trains = db.query(Train).filter(
-            Train.current_section_id == section_id,
-            Train.status.in_(["RUNNING", "DELAYED", "SCHEDULED"])
-        ).all()
+        # Simulate optimization progress
+        for progress in range(0, 101, 10):
+            optimization["progress_percentage"] = float(progress)
+            await asyncio.sleep(1)  # Simulate work
+            
+            # Check if cancelled
+            if optimization["status"] == "cancelled":
+                return
         
-        if not trains:
-            return {
-                "section_id": section_id,
-                "recommendations": [],
-                "timestamp": datetime.utcnow(),
-                "message": "No active trains in section"
+        # Complete optimization with mock results
+        optimization["status"] = "completed"
+        optimization["completed_at"] = datetime.utcnow()
+        optimization["progress_percentage"] = 100.0
+        
+        # Generate mock results based on optimization type
+        if optimization["optimization_type"] == "schedule_optimization":
+            optimization["results"] = {
+                "optimized_schedule": [
+                    {"train_id": tid, "departure_time": f"{8 + i}:00:00", "route": [1, 2, 3]}
+                    for i, tid in enumerate(optimization.get("train_ids", [1, 2, 3]))
+                ],
+                "total_delay_reduction": 12.3,
+                "energy_savings": 6.8
+            }
+        elif optimization["optimization_type"] == "route_optimization":
+            optimization["results"] = {
+                "optimized_routes": [
+                    {"train_id": tid, "route": [1, 3, 2], "distance_km": 45.2}
+                    for tid in optimization.get("train_ids", [1, 2, 3])
+                ],
+                "total_distance_saved": 8.7,
+                "time_saved_minutes": 15.4
+            }
+        else:
+            optimization["results"] = {
+                "optimization_completed": True,
+                "improvement_percentage": 8.5
             }
         
-        # Generate recommendations using optimization service
-        opt_service = OptimizationService(db)
-        recommendations = await opt_service.generate_recommendations(
-            section=section,
-            trains=trains,
-            time_horizon=time_horizon
-        )
-        
-        return {
-            "section_id": section_id,
-            "section_name": section.section_name,
-            "recommendations": recommendations,
-            "trains_considered": len(trains),
-            "timestamp": datetime.utcnow()
+        # Generate mock metrics
+        optimization["metrics"] = {
+            "total_delay_reduction": 10.5 + (optimization_id % 10),
+            "energy_savings_percentage": 5.2 + (optimization_id % 5),
+            "capacity_utilization": 80.0 + (optimization_id % 20),
+            "solution_quality": 0.85 + (optimization_id % 10) / 100,
+            "computation_time_seconds": (optimization["completed_at"] - optimization["started_at"]).total_seconds()
         }
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to generate recommendations: {str(e)}")
+        optimization["status"] = "failed"
+        optimization["error_message"] = str(e)
+        optimization["completed_at"] = datetime.utcnow()

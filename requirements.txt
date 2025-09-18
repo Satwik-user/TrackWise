@@ -1,0 +1,97 @@
+# TrackWise Railway Optimization System - Ultimate Requirements
+# Generated for full-stack deployment with all features
+
+# Core FastAPI and ASGI
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+
+# Database - SQLite Async Support
+sqlalchemy[asyncio]>=2.0.0
+aiosqlite>=0.19.0
+alembic>=1.12.0
+
+# PostgreSQL (optional for production)
+asyncpg>=0.29.0
+psycopg2-binary>=2.9.0
+
+# Redis and Caching
+redis[hiredis]>=5.0.0
+aioredis>=2.0.0
+
+# Authentication & Security
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+python-multipart>=0.0.6
+cryptography>=41.0.0
+
+# HTTP Client Libraries
+aiohttp>=3.9.0
+httpx>=0.25.0
+
+# Data Science & Analytics
+numpy>=1.24.0
+pandas>=2.1.0
+scipy>=1.11.0
+scikit-learn>=1.3.0
+
+# Optimization Solvers
+ortools>=9.8.0
+pulp>=2.7.0
+cvxpy>=1.4.1
+
+# WebSocket Support
+websockets>=12.0
+python-socketio>=5.10.0
+
+# Background Tasks
+celery>=5.3.0
+kombu>=5.3.0
+
+# Monitoring & Logging
+prometheus-client>=0.19.0
+structlog>=23.2.0
+rich>=13.7.0
+
+# Email Support
+aiosmtplib>=3.0.1
+email-validator>=2.1.0
+
+# File Handling
+aiofiles>=23.2.0
+python-multipart>=0.0.6
+
+# Date/Time Utilities
+python-dateutil>=2.8.2
+pytz>=2023.3
+
+# Configuration
+python-dotenv>=1.0.0
+
+# JSON Handling
+ujson>=5.8.0
+
+# UUID Utilities
+shortuuid>=1.0.11
+
+# System Monitoring
+psutil>=5.9.6
+
+# Development Tools
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+black>=23.11.0
+isort>=5.12.0
+flake8>=6.1.0
+mypy>=1.7.1
+
+# CLI Tools
+click>=8.1.7
+typer>=0.9.0
+
+# Additional Utilities
+requests>=2.31.0
+python-slugify>=8.0.1
+markdown>=3.5.1

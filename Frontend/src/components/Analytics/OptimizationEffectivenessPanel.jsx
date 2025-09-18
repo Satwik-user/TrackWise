@@ -1,0 +1,139 @@
+import React, { useState, useEffect } from 'react';
+import {
+  ClockIcon,
+  ChartBarIcon,
+  CpuChipIcon,
+  ArrowTrendingUpIcon,
+  ArrowPathIcon
+} from '@heroicons/react/24/outline';
+import LoadingSpinner from '../Common/LoadingSpinner';
+
+const OptimizationEffectivenessPanel = ({ timeRange = '7d' }) => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [activeChart, setActiveChart] = useState('effectiveness');
+
+  useEffect(() => {
+    fetchOptimizationData();
+  }, [timeRange]);
+
+  const fetchOptimizationData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/analytics/optimization?timeRange=${timeRange}`);
+      if (!response.ok) throw new Error('Failed to fetch optimization data');
+      const result = await response.json();
+      setData(result);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) return <LoadingSpinner />;
+  if (error) return <div className="text-red-600">Error: {error}</div>;
+  if (!data) return <div>No data available</div>;
+
+  const chartTabs = [
+    { id: 'effectiveness', name: 'Effectiveness', icon: ArrowTrendingUpIcon },
+    { id: 'solvingTimes', name: 'Solving Times', icon: ClockIcon },
+    { id: 'objectives', name: 'Objective Values', icon: ChartBarIcon },
+    { id: 'algorithms', name: 'Algorithm Comparison', icon: CpuChipIcon }
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow">
+          <div className="flex items-center">
+            <ArrowTrendingUpIcon className="h-8 w-8 text-green-500" />
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Success Rate</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {((data.summary?.successful_optimizations || 0) / Math.max(data.summary?.total_optimizations || 1, 1) * 100).toFixed(1)}%
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow">
+          <div className="flex items-center">
+            <ClockIcon className="h-8 w-8 text-blue-500" />
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Avg Solve Time</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {(data.summary?.average_solve_time || 0).toFixed(1)}s
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow">
+          <div className="flex items-center">
+            <ChartBarIcon className="h-8 w-8 text-purple-500" />
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Avg Improvement</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {(data.summary?.average_improvement || 0).toFixed(1)}%
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow">
+          <div className="flex items-center">
+            <CpuChipIcon className="h-8 w-8 text-orange-500" />
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Total Runs</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {data.summary?.total_optimizations || 0}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Chart Tabs */}
+      <div className="bg-white rounded-lg shadow">
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8 px-6">
+            {chartTabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveChart(tab.id)}
+                  className={`${
+                    activeChart === tab.id
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
+                >
+                  <Icon className="h-5 w-5 mr-2" />
+                  {tab.name}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        <div className="p-6">
+          {activeChart === 'effectiveness' && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Optimization Effectiveness</h3>
+              <div className="h-64 bg-gray-100 rounded flex items-center justify-center">
+                <p className="text-gray-500">Effectiveness chart</p>
+              </div>
+            </div>
+          )}
+          {/* Other chart content */}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default OptimizationEffectivenessPanel;
