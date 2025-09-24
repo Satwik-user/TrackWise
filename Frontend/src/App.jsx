@@ -44,35 +44,56 @@ function App() {
 
     const checkAuthStatus = async () => {
     try {
-      // For development - auto login with admin credentials
-      console.log('Auto-logging in with admin credentials...');
-      const response = await authService.login({ username: 'admin', password: 'admin123' });
-      setUser(response.user);
-      setIsAuthenticated(true);
-      console.log('Auto-login successful');
-    } catch (error) {
-      console.error('Auto-login failed:', error);
-      // Fallback: check existing token
+      // First check existing token
       const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
       if (token) {
         // Verify token with backend
         const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (response.ok) {
+            const userData = await response.json();
+            setUser(userData);
+            setIsAuthenticated(true);
+            console.log('Existing token validated successfully');
+            setIsLoading(false);
+            return;
           }
-        });
-        
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-          setIsAuthenticated(true);
-        } else {
-          // Token invalid, remove it
-          localStorage.removeItem('token');
-          localStorage.removeItem('auth_token');
+        } catch (e) {
+          console.warn('Token validation failed:', e);
         }
+        
+        // Token invalid, remove it
+        localStorage.removeItem('token');
+        localStorage.removeItem('auth_token');
       }
+      
+      // Auto login with admin credentials
+      console.log('Auto-logging in with admin credentials...');
+      const response = await authService.login({ username: 'admin', password: 'admin123' });
+      if (response && response.access_token) {
+        // Set user info (use mock user if not available)
+        const user = response.user || { 
+          id: 1, 
+          username: 'admin', 
+          email: 'admin@trackwise.com', 
+          role: 'administrator' 
+        };
+        setUser(user);
+        setIsAuthenticated(true);
+        console.log('Auto-login successful');
+      } else {
+        console.error('Auto-login failed: No access token received');
+      }
+    } catch (error) {
+      console.error('Authentication setup failed:', error);
+      // Don't block the app, just proceed without authentication
+      setIsAuthenticated(false);
     }
     setIsLoading(false);
   };
@@ -133,11 +154,7 @@ function App() {
                       <Dashboard />
                     </ErrorBoundary>
                   } />
-                  <Route path="/trains" element={
-                    <ErrorBoundary fallbackMessage="Train Management is temporarily unavailable">
-                      <TrainManagement />
-                    </ErrorBoundary>
-                  } />
+                  <Route path="/trains" element={<Navigate to="/train-control" />} />
                   <Route path="/sections" element={
                     <ErrorBoundary fallbackMessage="Section Management is temporarily unavailable">
                       <SectionManagement />

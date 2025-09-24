@@ -72,8 +72,8 @@ class SimulationMetricsResponse(BaseModel):
     cost_efficiency: float
 
 
-# Global simulation instance
-current_simulation = None
+# Enhanced simulation instance
+enhanced_simulation = None
 simulation_task = None
 
 
@@ -82,23 +82,23 @@ async def get_simulation_status(
     current_user: dict = Depends(get_current_active_user)
 ):
     """Get current simulation status"""
-    global current_simulation
+    global enhanced_simulation
     
-    if not current_simulation:
+    if not enhanced_simulation:
         return {
             "status": "not_running",
             "message": "No simulation is currently running"
         }
     
     return {
-        "status": current_simulation.status.value,
-        "speed": current_simulation.speed.value,
-        "current_time": current_simulation.current_time.isoformat() if current_simulation.current_time else None,
-        "start_time": current_simulation.start_time.isoformat() if current_simulation.start_time else None,
-        "end_time": current_simulation.end_time.isoformat() if current_simulation.end_time else None,
-        "progress_percentage": calculate_progress_percentage(current_simulation),
-        "active_trains": len(getattr(current_simulation, 'trains', {})),
-        "active_sections": len(getattr(current_simulation, 'sections', {}))
+        "status": enhanced_simulation.status.value,
+        "current_time": enhanced_simulation.current_time.isoformat() if enhanced_simulation.current_time else None,
+        "start_time": enhanced_simulation.start_time.isoformat() if enhanced_simulation.start_time else None,
+        "end_time": enhanced_simulation.end_time.isoformat() if enhanced_simulation.end_time else None,
+        "progress_percentage": enhanced_simulation._calculate_progress() if enhanced_simulation else 0.0,
+        "active_trains": enhanced_simulation._count_active_trains() if enhanced_simulation else 0,
+        "total_trains": len(enhanced_simulation.trains) if enhanced_simulation else 0,
+        "total_sections": len(enhanced_simulation.sections) if enhanced_simulation else 0
     }
 
 
@@ -108,40 +108,38 @@ async def start_simulation(
     background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_active_user)
 ):
-    """Start a new simulation"""
-    global current_simulation, simulation_task
+    """Start a new enhanced simulation with real train movement"""
+    global enhanced_simulation, simulation_task
     
     # Stop existing simulation if running
-    if current_simulation and current_simulation.status in [SimulationStatus.RUNNING, SimulationStatus.PAUSED]:
-        await current_simulation.stop()
+    if enhanced_simulation and enhanced_simulation.status in [SimulationStatus.RUNNING, SimulationStatus.PAUSED]:
+        await enhanced_simulation.stop()
         if simulation_task:
             simulation_task.cancel()
     
     try:
-        # Create new simulation
-        from app.services.simulation_service import SimulationEngine
-        current_simulation = SimulationEngine()
-        current_simulation.speed = request.speed
+        # Create new enhanced simulation
+        from app.services.enhanced_simulation_engine import EnhancedSimulationEngine
+        enhanced_simulation = EnhancedSimulationEngine()
         
-        # Initialize simulation in background
+        # Start enhanced simulation in background
         background_tasks.add_task(
-            run_simulation_background,
-            request.duration_hours,
-            request.scenario_config
+            run_enhanced_simulation_background,
+            request.duration_hours
         )
         
         return {
             "status": "started",
-            "message": f"Simulation '{request.name}' started successfully",
-            "simulation_id": f"sim_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+            "message": f"Enhanced simulation '{request.name}' started successfully with real train movement",
+            "simulation_id": f"enhanced_sim_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
             "duration_hours": request.duration_hours,
-            "speed": request.speed.value
+            "features": ["real_train_movement", "dynamic_metrics", "position_tracking"]
         }
         
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to start simulation: {str(e)}"
+            detail=f"Failed to start enhanced simulation: {str(e)}"
         )
 
 
@@ -149,26 +147,26 @@ async def start_simulation(
 async def pause_simulation(
     current_user: dict = Depends(get_current_active_user)
 ):
-    """Pause the current simulation"""
-    global current_simulation
+    """Pause the current enhanced simulation"""
+    global enhanced_simulation
     
-    if not current_simulation:
+    if not enhanced_simulation:
         raise HTTPException(
             status_code=404,
             detail="No simulation is currently running"
         )
     
-    if current_simulation.status != SimulationStatus.RUNNING:
+    if enhanced_simulation.status != SimulationStatus.RUNNING:
         raise HTTPException(
             status_code=400,
-            detail=f"Cannot pause simulation in {current_simulation.status} status"
+            detail=f"Cannot pause simulation in {enhanced_simulation.status} status"
         )
     
-    await current_simulation.pause()
+    await enhanced_simulation.pause()
     
     return {
         "status": "paused",
-        "message": "Simulation paused successfully"
+        "message": "Enhanced simulation paused successfully"
     }
 
 
@@ -176,26 +174,26 @@ async def pause_simulation(
 async def resume_simulation(
     current_user: dict = Depends(get_current_active_user)
 ):
-    """Resume the paused simulation"""
-    global current_simulation
+    """Resume the paused enhanced simulation"""
+    global enhanced_simulation
     
-    if not current_simulation:
+    if not enhanced_simulation:
         raise HTTPException(
             status_code=404,
             detail="No simulation is currently running"
         )
     
-    if current_simulation.status != SimulationStatus.PAUSED:
+    if enhanced_simulation.status != SimulationStatus.PAUSED:
         raise HTTPException(
             status_code=400,
-            detail=f"Cannot resume simulation in {current_simulation.status} status"
+            detail=f"Cannot resume simulation in {enhanced_simulation.status} status"
         )
     
-    await current_simulation.resume()
+    await enhanced_simulation.resume()
     
     return {
         "status": "resumed",
-        "message": "Simulation resumed successfully"
+        "message": "Enhanced simulation resumed successfully"
     }
 
 
@@ -203,16 +201,16 @@ async def resume_simulation(
 async def stop_simulation(
     current_user: dict = Depends(get_current_active_user)
 ):
-    """Stop the current simulation"""
-    global current_simulation, simulation_task
+    """Stop the current enhanced simulation"""
+    global enhanced_simulation, simulation_task
     
-    if not current_simulation:
+    if not enhanced_simulation:
         raise HTTPException(
             status_code=404,
             detail="No simulation is currently running"
         )
     
-    await current_simulation.stop()
+    await enhanced_simulation.stop()
     
     if simulation_task:
         simulation_task.cancel()
@@ -220,7 +218,7 @@ async def stop_simulation(
     
     return {
         "status": "stopped",
-        "message": "Simulation stopped successfully"
+        "message": "Enhanced simulation stopped successfully"
     }
 
 
@@ -228,89 +226,105 @@ async def stop_simulation(
 async def get_simulation_metrics(
     current_user: dict = Depends(get_current_active_user)
 ):
-    """Get current simulation metrics"""
-    global current_simulation
+    """Get current enhanced simulation metrics with real-time data"""
+    global enhanced_simulation
     
-    if not current_simulation:
+    if not enhanced_simulation:
         raise HTTPException(
             status_code=404,
             detail="No simulation is currently running"
         )
     
-    if not current_simulation.metrics:
-        # Calculate current metrics
-        async with AsyncSessionLocal() as session:
-            metrics = await current_simulation._calculate_final_metrics(session)
-            return SimulationMetricsResponse(**metrics.__dict__)
-    
-    return SimulationMetricsResponse(**current_simulation.metrics.__dict__)
+    # Get real-time metrics from enhanced simulation
+    if hasattr(enhanced_simulation, 'current_metrics'):
+        metrics = enhanced_simulation.current_metrics
+        return SimulationMetricsResponse(
+            total_delay_minutes=metrics.total_delay_minutes,
+            average_delay_per_train=metrics.average_delay_per_train,
+            on_time_percentage=metrics.on_time_percentage,
+            section_utilization=metrics.section_utilization,
+            throughput_trains_per_hour=metrics.throughput_trains_per_hour,
+            energy_consumption=0.0,  # Future enhancement
+            cost_efficiency=0.0     # Future enhancement
+        )
+    else:
+        # Fallback to basic metrics
+        return SimulationMetricsResponse(
+            total_delay_minutes=0.0,
+            average_delay_per_train=0.0,
+            on_time_percentage=100.0,
+            section_utilization={},
+            throughput_trains_per_hour=0.0,
+            energy_consumption=0.0,
+            cost_efficiency=0.0
+        )
 
 
 @router.get("/trains/positions", response_model=Dict[str, Any])
 async def get_train_positions(
     current_user: dict = Depends(get_current_active_user)
 ):
-    """Get current train positions in simulation"""
-    global current_simulation
+    """Get real-time train positions with enhanced tracking"""
+    global enhanced_simulation
     
-    if not current_simulation:
+    if not enhanced_simulation:
         raise HTTPException(
             status_code=404,
             detail="No simulation is currently running"
         )
     
-    positions = getattr(current_simulation, 'train_positions', {})
-    
-    return {
-        "timestamp": current_simulation.current_time.isoformat() if current_simulation.current_time else None,
-        "positions": positions,
-        "total_trains": len(positions)
-    }
+    # Get real-time train positions from enhanced simulation
+    return enhanced_simulation.get_train_positions()
 
 
-async def run_simulation_background(duration_hours: int, scenario_config: Dict[str, Any]):
-    """Run simulation in background task"""
-    global current_simulation, simulation_task
+async def run_enhanced_simulation_background(duration_hours: int):
+    """Run enhanced simulation in background task with real train movement"""
+    global enhanced_simulation, simulation_task
     
     try:
         async with AsyncSessionLocal() as session:
-            # Initialize simulation
-            await current_simulation.initialize(
-                session, 
-                scenario_config, 
-                duration_hours=duration_hours
-            )
+            # Initialize enhanced simulation
+            await enhanced_simulation.initialize(session, duration_hours=duration_hours)
             
             # Start broadcasting initial state
             await broadcast_simulation_update("simulation_started", {
-                "status": current_simulation.status.value,
-                "start_time": current_simulation.start_time.isoformat() if current_simulation.start_time else None,
-                "end_time": current_simulation.end_time.isoformat() if current_simulation.end_time else None
+                "status": enhanced_simulation.status.value,
+                "start_time": enhanced_simulation.start_time.isoformat() if enhanced_simulation.start_time else None,
+                "end_time": enhanced_simulation.end_time.isoformat() if enhanced_simulation.end_time else None,
+                "total_trains": len(enhanced_simulation.trains),
+                "total_sections": len(enhanced_simulation.sections)
             })
             
-            # Run simulation with periodic updates
-            simulation_task = asyncio.create_task(run_with_updates(session))
+            # Run enhanced simulation with periodic updates
+            simulation_task = asyncio.create_task(run_enhanced_with_updates(session))
             await simulation_task
             
     except asyncio.CancelledError:
         await broadcast_simulation_update("simulation_cancelled", {
             "status": "cancelled",
-            "message": "Simulation was cancelled"
+            "message": "Enhanced simulation was cancelled"
         })
     except Exception as e:
+        logger.error(f"Enhanced simulation background task failed: {e}")
         await broadcast_simulation_update("simulation_error", {
-            "status": "failed",
+            "status": "failed", 
             "error": str(e)
         })
 
 
-async def run_with_updates(session):
-    """Run simulation with periodic WebSocket updates"""
-    global current_simulation
+async def run_simulation_background(duration_hours: int, scenario_config: Dict[str, Any]):
+    """Legacy simulation background task - keeping for compatibility"""
+    # Redirect to enhanced simulation
+    await run_enhanced_simulation_background(duration_hours)
+
+
+async def run_enhanced_with_updates(session):
+    """Run enhanced simulation with periodic WebSocket updates"""
+    global enhanced_simulation
     
     try:
-        # Start simulation
-        metrics = await current_simulation.run(session)
+        # Start enhanced simulation with real train movement
+        metrics = await enhanced_simulation.run(session)
         
         # Broadcast completion
         await broadcast_simulation_update("simulation_completed", {
@@ -318,15 +332,23 @@ async def run_with_updates(session):
             "metrics": {
                 "total_delay_minutes": metrics.total_delay_minutes,
                 "on_time_percentage": metrics.on_time_percentage,
+                "active_trains": metrics.active_trains,
                 "throughput": metrics.throughput_trains_per_hour
             }
         })
         
     except Exception as e:
+        logger.error(f"Enhanced simulation execution failed: {e}")
         await broadcast_simulation_update("simulation_failed", {
             "status": "failed",
             "error": str(e)
         })
+
+
+async def run_with_updates(session):
+    """Legacy simulation runner - redirect to enhanced"""
+    # Redirect to enhanced simulation
+    await run_enhanced_with_updates(session)
 
 
 async def broadcast_simulation_update(event_type: str, data: Dict[str, Any]):

@@ -41,6 +41,3 @@ class Section(Base):
     max_capacity = Column(Integer, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
-    # Relationships
-    schedules = relationship("Schedule", back_populates="section")

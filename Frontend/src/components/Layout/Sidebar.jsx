@@ -24,7 +24,6 @@ const Sidebar = () => {
   const navigationItems = [
     { id: 'dashboard', name: 'Dashboard', icon: HomeIcon, path: '/' },
     { id: 'sections', name: 'Sections', icon: MapIcon, path: '/sections' },
-    { id: 'trains', name: 'Train Management', icon: TruckIcon, path: '/trains' },
     { id: 'analytics', name: 'Analytics', icon: ChartBarIcon, path: '/analytics' },
     { id: 'optimization', name: 'Optimization Center', icon: CpuChipIcon, path: '/optimization' },
     { id: 'realtime', name: 'Real-time View', icon: EyeIcon, path: '/realtime' },

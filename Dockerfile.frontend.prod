@@ -1,0 +1,42 @@
+# Production-optimized frontend Dockerfile
+FROM node:18-alpine as builder
+
+WORKDIR /app
+
+# Copy package files
+COPY Frontend/package*.json ./
+
+# Install all dependencies (including devDependencies for build)
+RUN npm ci
+
+# Copy source code
+COPY Frontend/ .
+
+# Build the application for production
+RUN npm run build
+
+# Production stage with nginx
+FROM nginx:alpine
+
+# Install curl for healthchecks
+RUN apk add --no-cache curl
+
+# Copy build output to nginx html directory
+COPY --from=builder /app/build /usr/share/nginx/html
+
+# Copy custom nginx configuration
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+
+# Create nginx user and set permissions
+RUN chown -R nginx:nginx /usr/share/nginx/html && \
+    chmod -R 755 /usr/share/nginx/html
+
+# Expose port
+EXPOSE 80
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:80 || exit 1
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]

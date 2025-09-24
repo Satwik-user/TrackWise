@@ -1,45 +1,61 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery } from 'react-query';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   ChartBarIcon,
   ClockIcon,
   ArrowTrendingUpIcon,
   DocumentArrowDownIcon,
   CalendarDaysIcon,
-  AdjustmentsHorizontalIcon,
-  FunnelIcon,
   ArrowPathIcon,
-  ExclamationTriangleIcon,
   CheckCircleIcon,
-  InformationCircleIcon
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 
 import { apiService } from '../services/apiService';
-import { useAppStore } from '../store/appStore';
-
-// Components
-import PerformanceOverviewPanel from '../components/Analytics/PerformanceOverviewPanel';
-import DelayAnalysisPanel from '../components/Analytics/DelayAnalysisPanel';
-import ThroughputTrendsPanel from '../components/Analytics/ThroughputTrendsPanel';
-import OptimizationEffectivenessPanel from '../components/Analytics/OptimizationEffectivenessPanel';
-import SectionUtilizationPanel from '../components/Analytics/SectionUtilizationPanel';
-import AnalyticsFilters from '../components/Analytics/AnalyticsFilters';
-import ExportPanel from '../components/Analytics/ExportPanel';
 
 const Analytics = () => {
-  const [timeRange, setTimeRange] = useState(24); // hours
-  const [filters, setFilters] = useState({
-    trainType: '',
-    sectionIds: [],
-    priority: '',
-    dateRange: null
-  });
-  const [activePanel, setActivePanel] = useState('overview');
+  const [timeRange, setTimeRange] = useState('last_24_hours');
   const [refreshKey, setRefreshKey] = useState(0);
   const [autoRefresh, setAutoRefresh] = useState(true);
+  
+  // State for analytics data
+  const [kpisData, setKpisData] = useState(null);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [metricsData, setMetricsData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const { updateMetrics } = useAppStore();
+  // Fetch analytics data
+  const fetchAnalyticsData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      console.log('Fetching analytics data...');
+      
+      // Fetch data from working endpoints
+      const [kpis, dashboard, metrics] = await Promise.all([
+        apiService.analytics.getKPIs(timeRange),
+        apiService.analytics.getDashboard(),
+        apiService.analytics.getMetrics('performance', timeRange)
+      ]);
+      
+      console.log('Analytics data fetched successfully:', { kpis, dashboard, metrics });
+      
+      setKpisData(kpis);
+      setDashboardData(dashboard);
+      setMetricsData(metrics);
+    } catch (err) {
+      console.error('Failed to fetch analytics data:', err);
+      setError(err.message || 'Failed to fetch analytics data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial load and refresh
+  useEffect(() => {
+    fetchAnalyticsData();
+  }, [timeRange, refreshKey]);
 
   // Auto-refresh every 5 minutes
   useEffect(() => {
@@ -52,123 +68,13 @@ const Analytics = () => {
     return () => clearInterval(interval);
   }, [autoRefresh]);
 
-  // Fetch performance overview
-  const { 
-    data: performanceData, 
-    isLoading: performanceLoading,
-    error: performanceError 
-  } = useQuery(
-    ['analytics-performance', timeRange, filters.sectionIds, refreshKey],
-    () => apiService.analytics.getPerformanceOverview(
-      timeRange, 
-      filters.sectionIds.length > 0 ? filters.sectionIds : undefined
-    ),
-    {
-      onSuccess: (data) => {
-        updateMetrics(data);
-      },
-      onError: (error) => {
-        console.error('Failed to fetch performance data:', error);
-      }
-    }
-  );
-
-  // Fetch delay analysis
-  const { 
-    data: delayData, 
-    isLoading: delayLoading 
-  } = useQuery(
-    ['analytics-delays', timeRange, filters.trainType, filters.priority, refreshKey],
-    () => apiService.analytics.getDelayAnalysis(
-      timeRange,
-      filters.trainType || undefined,
-      filters.priority || undefined
-    ),
-    {
-      enabled: activePanel === 'delays' || activePanel === 'overview'
-    }
-  );
-
-  // Fetch throughput trends
-  const { 
-    data: throughputData, 
-    isLoading: throughputLoading 
-  } = useQuery(
-    ['analytics-throughput', timeRange, filters.sectionIds, refreshKey],
-    () => apiService.analytics.getThroughputTrends(
-      timeRange,
-      filters.sectionIds.length > 0 ? filters.sectionIds : undefined,
-      timeRange > 48 ? 'day' : 'hour'
-    ),
-    {
-      enabled: activePanel === 'throughput' || activePanel === 'overview'
-    }
-  );
-
-  // Fetch optimization effectiveness
-  const { 
-    data: optimizationData, 
-    isLoading: optimizationLoading 
-  } = useQuery(
-    ['analytics-optimization', timeRange, refreshKey],
-    () => apiService.analytics.getOptimizationEffectiveness(timeRange),
-    {
-      enabled: activePanel === 'optimization' || activePanel === 'overview'
-    }
-  );
-
-  // Fetch section utilization
-  const { 
-    data: sectionData, 
-    isLoading: sectionLoading 
-  } = useQuery(
-    ['analytics-sections', timeRange, refreshKey],
-    () => apiService.analytics.getSectionUtilization(timeRange, false),
-    {
-      enabled: activePanel === 'sections' || activePanel === 'overview'
-    }
-  );
-
-  const panels = [
-    {
-      id: 'overview',
-      label: 'Overview',
-      icon: ChartBarIcon,
-      description: 'System performance overview'
-    },
-    {
-      id: 'delays',
-      label: 'Delay Analysis',
-      icon: ClockIcon,
-      description: 'Detailed delay analysis'
-    },
-    {
-      id: 'throughput',
-      label: 'Throughput',
-      icon: ArrowTrendingUpIcon,
-      description: 'Traffic throughput trends'
-    },
-    {
-      id: 'optimization',
-      label: 'Optimization',
-      icon: AdjustmentsHorizontalIcon,
-      description: 'Optimization effectiveness'
-    },
-    {
-      id: 'sections',
-      label: 'Sections',
-      icon: FunnelIcon,
-      description: 'Section utilization analysis'
-    }
-  ];
-
   const handleManualRefresh = () => {
     setRefreshKey(prev => prev + 1);
   };
 
   const handleExport = async (format) => {
     try {
-      const reportData = await apiService.analytics.exportPerformanceReport(timeRange, format);
+      const reportData = await apiService.analytics.exportData('performance', format);
       
       // Create and download file
       const blob = new Blob([JSON.stringify(reportData, null, 2)], {
@@ -186,10 +92,27 @@ const Analytics = () => {
     }
   };
 
-  const getLoadingState = () => {
-    return performanceLoading || delayLoading || throughputLoading || 
-           optimizationLoading || sectionLoading;
-  };
+  // Helper function to render KPI cards
+  const renderKPICard = (title, value, target, unit = '', trend = null) => (
+    <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-600">{title}</p>
+          <p className="text-2xl font-bold text-gray-900">
+            {typeof value === 'number' ? value.toFixed(1) : value}{unit}
+          </p>
+          {target !== undefined && (
+            <p className="text-xs text-gray-500">Target: {target}{unit}</p>
+          )}
+        </div>
+        {trend && (
+          <div className={`text-sm ${trend > 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {trend > 0 ? '↗' : '↙'} {Math.abs(trend)}%
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div className="h-full flex flex-col">
@@ -213,15 +136,13 @@ const Analytics = () => {
               <CalendarDaysIcon className="h-4 w-4 text-gray-400" />
               <select
                 value={timeRange}
-                onChange={(e) => setTimeRange(parseInt(e.target.value))}
-                className="input-field text-sm"
+                onChange={(e) => setTimeRange(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md text-sm"
               >
-                <option value={1}>Last Hour</option>
-                <option value={6}>Last 6 Hours</option>
-                <option value={24}>Last 24 Hours</option>
-                <option value={72}>Last 3 Days</option>
-                <option value={168}>Last Week</option>
-                <option value={720}>Last Month</option>
+                <option value="last_hour">Last Hour</option>
+                <option value="last_24_hours">Last 24 Hours</option>
+                <option value="last_week">Last Week</option>
+                <option value="last_month">Last Month</option>
               </select>
             </div>
 
@@ -241,15 +162,21 @@ const Analytics = () => {
             {/* Manual Refresh */}
             <button
               onClick={handleManualRefresh}
-              disabled={getLoadingState()}
-              className="btn-secondary flex items-center space-x-2"
+              disabled={loading}
+              className="flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
-              <ArrowPathIcon className={`h-4 w-4 ${getLoadingState() ? 'animate-spin' : ''}`} />
+              <ArrowPathIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
             </button>
 
             {/* Export */}
-            <ExportPanel onExport={handleExport} />
+            <button
+              onClick={() => handleExport('json')}
+              className="flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              <DocumentArrowDownIcon className="h-4 w-4" />
+              <span>Export</span>
+            </button>
           </div>
         </div>
 
@@ -257,9 +184,9 @@ const Analytics = () => {
         <div className="mt-4 flex items-center justify-between">
           <div className="flex items-center space-x-6 text-sm">
             <div className="flex items-center space-x-2">
-              <div className={`w-2 h-2 rounded-full ${performanceError ? 'bg-red-500' : 'bg-green-500'}`} />
+              <div className={`w-2 h-2 rounded-full ${error ? 'bg-red-500' : 'bg-green-500'}`} />
               <span className="text-gray-600">
-                Data Status: {performanceError ? 'Error' : 'Healthy'}
+                Data Status: {error ? 'Error' : 'Healthy'}
               </span>
             </div>
             
@@ -268,42 +195,9 @@ const Analytics = () => {
             </div>
             
             <div className="text-gray-500">
-              Time Range: {timeRange}h
+              Time Range: {timeRange.replace('_', ' ')}
             </div>
           </div>
-
-          {/* Panel Navigation */}
-          <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
-            {panels.map((panel) => {
-              const Icon = panel.icon;
-              return (
-                <button
-                  key={panel.id}
-                  onClick={() => setActivePanel(panel.id)}
-                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                    activePanel === panel.id
-                      ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                  title={panel.description}
-                >
-                  <div className="flex items-center space-x-1">
-                    <Icon className="h-4 w-4" />
-                    <span className="hidden sm:inline">{panel.label}</span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className="mt-4">
-          <AnalyticsFilters
-            filters={filters}
-            onFiltersChange={setFilters}
-            timeRange={timeRange}
-          />
         </div>
       </div>
 
@@ -311,265 +205,130 @@ const Analytics = () => {
       <div className="flex-1 overflow-hidden">
         <div className="h-full overflow-y-auto p-6">
           {/* Error State */}
-          {performanceError && (
+          {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
               <div className="flex items-center space-x-2">
                 <ExclamationTriangleIcon className="h-5 w-5 text-red-600" />
                 <div>
                   <h3 className="text-sm font-medium text-red-800">Data Loading Error</h3>
-                  <p className="text-sm text-red-700 mt-1">
-                    Failed to load analytics data. Please try refreshing or check your connection.
-                  </p>
+                  <p className="text-sm text-red-700 mt-1">{error}</p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Panel Content */}
-          <AnimatePresence mode="wait">
-            {activePanel === 'overview' && (
-              <OverviewPanel
-                key="overview"
-                performanceData={performanceData}
-                delayData={delayData}
-                throughputData={throughputData}
-                optimizationData={optimizationData}
-                sectionData={sectionData}
-                isLoading={getLoadingState()}
-                timeRange={timeRange}
-              />
-            )}
-
-            {activePanel === 'delays' && (
-              <motion.div
-                key="delays"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.2 }}
-              >
-                <DelayAnalysisPanel
-                  data={delayData}
-                  isLoading={delayLoading}
-                  timeRange={timeRange}
-                  filters={filters}
-                />
-              </motion.div>
-            )}
-
-            {activePanel === 'throughput' && (
-              <motion.div
-                key="throughput"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.2 }}
-              >
-                <ThroughputTrendsPanel
-                  data={throughputData}
-                  isLoading={throughputLoading}
-                  timeRange={timeRange}
-                  filters={filters}
-                />
-              </motion.div>
-            )}
-
-            {activePanel === 'optimization' && (
-              <motion.div
-                key="optimization"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.2 }}
-              >
-                <OptimizationEffectivenessPanel
-                  data={optimizationData}
-                  isLoading={optimizationLoading}
-                  timeRange={timeRange}
-                />
-              </motion.div>
-            )}
-
-            {activePanel === 'sections' && (
-              <motion.div
-                key="sections"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.2 }}
-              >
-                <SectionUtilizationPanel
-                  data={sectionData}
-                  isLoading={sectionLoading}
-                  timeRange={timeRange}
-                  filters={filters}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Overview Panel Component
-const OverviewPanel = ({
-  performanceData,
-  delayData,
-  throughputData,
-  optimizationData,
-  sectionData,
-  isLoading,
-  timeRange
-}) => {
-  if (isLoading) {
-    return <AnalyticsLoadingSkeleton />;
-  }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-6"
-    >
-      {/* Key Metrics Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <SummaryMetricCard
-          title="Total Trains"
-          value={performanceData?.train_metrics?.total_trains || 0}
-          change={5}
-          icon={ChartBarIcon}
-          color="blue"
-        />
-        
-        <SummaryMetricCard
-          title="Average Delay"
-          value={`${performanceData?.train_metrics?.average_delay_minutes?.toFixed(1) || 0}m`}
-          change={-12}
-          icon={ClockIcon}
-          color="orange"
-        />
-        
-        <SummaryMetricCard
-          title="On-Time Rate"
-          value={`${performanceData?.train_metrics?.on_time_percentage?.toFixed(1) || 0}%`}
-          change={8}
-          icon={CheckCircleIcon}
-          color="green"
-        />
-        
-        <SummaryMetricCard
-          title="System Utilization"
-          value={`${performanceData?.capacity_metrics?.utilization_percentage?.toFixed(1) || 0}%`}
-          change={-3}
-          icon={ArrowTrendingUpIcon}
-          color="purple"
-        />
-      </div>
-
-      {/* Overview Panels */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <PerformanceOverviewPanel
-          data={performanceData}
-          isLoading={false}
-          timeRange={timeRange}
-        />
-        
-        <DelayAnalysisPanel
-          data={delayData}
-          isLoading={false}
-          timeRange={timeRange}
-          compact={true}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ThroughputTrendsPanel
-          data={throughputData}
-          isLoading={false}
-          timeRange={timeRange}
-          compact={true}
-        />
-        
-        <OptimizationEffectivenessPanel
-          data={optimizationData}
-          isLoading={false}
-          timeRange={timeRange}
-          compact={true}
-        />
-      </div>
-    </motion.div>
-  );
-};
-
-// Summary Metric Card Component
-const SummaryMetricCard = ({ title, value, change, icon: Icon, color }) => {
-  const colorClasses = {
-    blue: 'text-blue-600 bg-blue-100',
-    green: 'text-green-600 bg-green-100',
-    orange: 'text-orange-600 bg-orange-100',
-    purple: 'text-purple-600 bg-purple-100',
-    red: 'text-red-600 bg-red-100'
-  };
-
-  const isPositive = change > 0;
-  const changeColor = isPositive ? 'text-green-600' : 'text-red-600';
-
-  return (
-    <div className="card">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
-          {change !== undefined && (
-            <div className={`flex items-center mt-2 text-sm ${changeColor}`}>
-              <ArrowTrendingUpIcon 
-                className={`h-4 w-4 mr-1 ${!isPositive ? 'transform rotate-180' : ''}`} 
-              />
-              <span>{Math.abs(change)}%</span>
-              <span className="text-gray-500 ml-1">vs last period</span>
+          {/* Loading State */}
+          {loading && (
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-2 text-gray-600">Loading analytics data...</span>
             </div>
           )}
-        </div>
-        
-        <div className={`p-3 rounded-lg ${colorClasses[color] || colorClasses.blue}`}>
-          <Icon className="h-6 w-6" />
-        </div>
-      </div>
-    </div>
-  );
-};
 
-// Analytics Loading Skeleton
-const AnalyticsLoadingSkeleton = () => {
-  return (
-    <div className="space-y-6">
-      {/* Metrics skeleton */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="card animate-pulse">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-                <div className="h-8 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-              </div>
-              <div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
-            </div>
-          </div>
-        ))}
-      </div>
-      
-      {/* Charts skeleton */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="card animate-pulse">
-            <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-            <div className="h-64 bg-gray-200 rounded"></div>
-          </div>
-        ))}
+          {/* Data Display */}
+          {!loading && !error && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-6"
+            >
+              {/* KPIs Section */}
+              {kpisData && (
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Key Performance Indicators</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                    {kpisData.operational_kpis && Object.entries(kpisData.operational_kpis).map(([key, kpi]) => (
+                      <div key={key}>
+                        {renderKPICard(
+                          key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                          kpi.value,
+                          kpi.target,
+                          kpi.unit || ''
+                        )}
+                      </div>
+                    ))}
+                    
+                    {kpisData.efficiency_kpis && Object.entries(kpisData.efficiency_kpis).map(([key, kpi]) => (
+                      <div key={key}>
+                        {renderKPICard(
+                          key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                          kpi.value,
+                          kpi.target,
+                          kpi.unit || ''
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Dashboard Overview */}
+              {dashboardData && (
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">System Overview</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    {dashboardData.train_analytics && (
+                      <div className="bg-white rounded-lg border border-gray-200 p-6">
+                        <h3 className="text-sm font-medium text-gray-600 mb-2">Train Analytics</h3>
+                        <p className="text-2xl font-bold text-gray-900">
+                          {dashboardData.train_analytics.total_trains}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Active: {dashboardData.train_analytics.active_trains}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {dashboardData.section_analytics && (
+                      <div className="bg-white rounded-lg border border-gray-200 p-6">
+                        <h3 className="text-sm font-medium text-gray-600 mb-2">Section Analytics</h3>
+                        <p className="text-2xl font-bold text-gray-900">
+                          {dashboardData.section_analytics.total_sections}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Available: {dashboardData.section_analytics.available_sections}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {dashboardData.performance_metrics && (
+                      <div className="bg-white rounded-lg border border-gray-200 p-6">
+                        <h3 className="text-sm font-medium text-gray-600 mb-2">Performance</h3>
+                        <p className="text-2xl font-bold text-gray-900">
+                          {(dashboardData.performance_metrics.overall_efficiency * 100).toFixed(1)}%
+                        </p>
+                        <p className="text-xs text-gray-500">Overall Efficiency</p>
+                      </div>
+                    )}
+                    
+                    {dashboardData.system_health && (
+                      <div className="bg-white rounded-lg border border-gray-200 p-6">
+                        <h3 className="text-sm font-medium text-gray-600 mb-2">System Health</h3>
+                        <p className="text-2xl font-bold text-green-600">
+                          {dashboardData.system_health.status || 'OK'}
+                        </p>
+                        <p className="text-xs text-gray-500">All Systems Operational</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Performance Metrics */}
+              {metricsData && (
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Performance Metrics</h2>
+                  <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <pre className="text-sm text-gray-700 overflow-x-auto">
+                      {JSON.stringify(metricsData, null, 2)}
+                    </pre>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </div>
       </div>
     </div>
   );

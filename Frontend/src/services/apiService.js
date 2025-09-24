@@ -1087,7 +1087,7 @@ export const apiService = {
 
     async predictDelay(train, section, timeHorizon = 1800) {
       try {
-        const response = await api.post('/api/predictions/delay/', {
+        const response = await api.post('/api/predictions/delay', {
           train,
           section,
           time_horizon: timeHorizon
@@ -1106,7 +1106,7 @@ export const apiService = {
 
     async predictDisruption(train, section, timeHorizon = 1800) {
       try {
-        const response = await api.post('/api/predictions/disruption/', {
+        const response = await api.post('/api/predictions/disruption', {
           train,
           section,
           time_horizon: timeHorizon
@@ -1125,7 +1125,7 @@ export const apiService = {
 
     async trainModels() {
       try {
-        const response = await api.post('/api/predictions/train/');
+        const response = await api.post('/api/predictions/train');
         return response.data;
       } catch (error) {
         console.warn('Model training API failed, returning mock data:', error);
@@ -1134,7 +1134,7 @@ export const apiService = {
     },
 
     async getBulkPredictions(trainSectionPairs) {
-      const response = await api.post('/api/predictions/bulk/', {
+      const response = await api.post('/api/predictions/bulk', {
         predictions: trainSectionPairs
       });
       return response.data;
@@ -1149,18 +1149,19 @@ export const apiService = {
         ]);
 
         // Create prediction requests for active trains in current sections
-        const activePredictions = trains.data
-          .filter(train => train.status === 'active')
+        const activePredictions = trains
+          .filter(train => train.status === 'ACTIVE' || train.status === 'active')
           .slice(0, 10) // Limit to prevent overwhelming the API
           .map(train => ({
             train: {
               id: train.id,
-              type: train.type,
-              priority: train.priority,
+              name: train.name || `Train-${train.id}`,
+              type: train.train_type || train.type,
+              priority: train.priority_level || train.priority,
               speed: train.current_speed || 80,
               position: train.position || 0
             },
-            section: sections.data.find(s => s.id === train.current_section_id) || {
+            section: sections.find(s => s.id === train.current_section) || {
               id: 'default',
               name: 'Unknown Section',
               length: 1000,
