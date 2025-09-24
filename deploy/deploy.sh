@@ -6,19 +6,20 @@
 set -e
 
 # Configuration
-APP_DIR="/opt/trackwise"
+APP_DIR="$(pwd)"  # Use current directory instead of /opt/trackwise
 REPO_URL="${REPO_URL:-https://github.com/Satwik-user/TrackWise.git}"
 BRANCH="${BRANCH:-prod}"
 COMPOSE_FILE="docker-compose.prod.yml"
 
 echo "🚀 Deploying TrackWise to Production..."
 
-# Check if running as trackwise user
-if [ "$(whoami)" != "trackwise" ]; then
-    echo "❌ This script should be run as the trackwise user"
-    echo "💡 Run: sudo -u trackwise $0"
-    exit 1
-fi
+# Check if running as trackwise user - COMMENTED OUT TO ALLOW UBUNTU USER
+# if [ "$(whoami)" != "trackwise" ]; then
+#     echo "❌ This script should be run as the trackwise user"
+#     echo "💡 Run: sudo -u trackwise $0"
+#     exit 1
+# fi
+echo "📋 Running as user: $(whoami)"
 
 # Navigate to application directory
 cd "$APP_DIR"
