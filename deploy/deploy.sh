@@ -34,18 +34,18 @@ if [ -d "current" ]; then
     ls -td backup_* 2>/dev/null | tail -n +4 | xargs rm -rf
 fi
 
-# Clone or update repository
+# Update repository (we're already in the repo directory)
 echo "📦 Fetching latest code..."
-if [ ! -d ".git" ]; then
-    git clone -b "$BRANCH" "$REPO_URL" current
-else
-    cd current
+if [ -d ".git" ]; then
     git fetch origin
     git checkout "$BRANCH"
     git pull origin "$BRANCH"
+else
+    echo "❌ Not a git repository. Please run from TrackWise directory."
+    exit 1
 fi
 
-cd "$APP_DIR/current"
+# We're already in the right directory
 
 # Check if environment file exists
 if [ ! -f ".env.prod" ]; then
