@@ -18,6 +18,7 @@ import TrainStatusChart from './TrainStatusChart';
 import SectionUtilizationChart from './SectionUtililizationChart';
 import PerformanceCharts from './PerformanceCharts';
 import LoadingSpinner from '../Common/LoadingSpinner';
+import { apiService } from '../../services/apiService';
 import { useWebSocket } from '../../context/WebSocketContext';
 
 const DashboardOverview = () => {
@@ -44,11 +45,8 @@ const DashboardOverview = () => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/v1/analytics/dashboard');
-        if (!response.ok) throw new Error('Failed to fetch dashboard data');
-        
-        const data = await response.json();
-        setMetrics(data.metrics);
+        const data = await apiService.analytics.getDashboard();
+        setMetrics(data);
         setLastUpdated(new Date());
         setError(null);
       } catch (err) {
@@ -100,7 +98,7 @@ const DashboardOverview = () => {
               <h3 className="text-sm font-medium text-red-800">
                 Error loading dashboard
               </h3>
-              <p className="text-sm text-red-700 mt-1">{error}</p>
+              <p className="text-sm text-red-700 mt-1">{typeof error === 'string' ? error : JSON.stringify(error)}</p>
             </div>
           </div>
         </div>

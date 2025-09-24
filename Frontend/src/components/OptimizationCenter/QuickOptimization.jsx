@@ -8,6 +8,7 @@ import {
   PlayIcon,
   StopIcon
 } from '@heroicons/react/24/outline';
+import SafeRenderer from '../Common/SafeRenderer';
 
 const QuickOptimization = ({ 
   onOptimize, 

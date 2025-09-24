@@ -19,6 +19,8 @@ import {
 import { apiService } from '../services/apiService';
 import { useAppStore } from '../store/appStore';
 import toast from 'react-hot-toast';
+import SafeRenderer from '../components/Common/SafeRenderer';
+import ValidationErrorBoundary from '../components/Common/ValidationErrorBoundary';
 
 // Components
 import OptimizationForm from '../components/OptimizationCenter/OptimizationForm';
@@ -29,6 +31,8 @@ import OptimizationMetrics from '../components/OptimizationCenter/OptimizationMe
 import QuickOptimization from '../components/OptimizationCenter/QuickOptimization';
 
 const OptimizationCenter = () => {
+  console.log('🚀 OptimizationCenter rendering...'); // Debug log
+  
   const [activeTab, setActiveTab] = useState('optimize');
   const [currentOptimization, setCurrentOptimization] = useState(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
@@ -52,8 +56,19 @@ const OptimizationCenter = () => {
     {
       refetchInterval: 30000, // Refresh every 30 seconds
       onSuccess: (data) => {
-        // Update store with latest runs
-        data.forEach(run => addOptimizationRun(run));
+        // Sanitize data before updating store
+        const sanitizedData = Array.isArray(data) ? data.map(run => {
+          if (typeof run === 'object' && run !== null) {
+            // Check if this is a validation error object
+            if (run.type && run.loc && run.msg && typeof run.input !== 'undefined') {
+              console.warn('🚨 Validation error in optimization runs:', run);
+              return null; // Filter out validation errors
+            }
+          }
+          return run;
+        }).filter(Boolean) : [];
+        
+        sanitizedData.forEach(run => addOptimizationRun(run));
       }
     }
   );
@@ -65,7 +80,21 @@ const OptimizationCenter = () => {
     {
       refetchInterval: 15000, // Refresh every 15 seconds
       onSuccess: (data) => {
-        updateMetrics(data);
+        // Sanitize metrics data
+        if (data && typeof data === 'object') {
+          // Check if data contains validation errors
+          const sanitizedData = { ...data };
+          Object.keys(sanitizedData).forEach(key => {
+            const value = sanitizedData[key];
+            if (value && typeof value === 'object' && value.type && value.loc && value.msg) {
+              console.warn('🚨 Validation error in metrics:', key, value);
+              sanitizedData[key] = { error: value.msg }; // Replace with safe object
+            }
+          });
+          updateMetrics(sanitizedData);
+        } else {
+          updateMetrics(data);
+        }
       }
     }
   );
@@ -204,7 +233,8 @@ const OptimizationCenter = () => {
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <ValidationErrorBoundary>
+      <div className="h-full flex flex-col">
       {/* Header */}
       <div className="flex-shrink-0 bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
@@ -394,6 +424,7 @@ const OptimizationCenter = () => {
         </div>
       </div>
     </div>
+    </ValidationErrorBoundary>
   );
 };
 
@@ -474,7 +505,7 @@ const OptimizationStatusBar = ({ isOptimizing, progress, currentOptimization }) 
               <div className={`text-lg font-bold ${
                 isSuccessful ? 'text-green-900' : 'text-red-900'
               }`}>
-                {currentOptimization.objective_value.toFixed(1)}
+                {(currentOptimization.objective_value || 0).toFixed(1)}
               </div>
               <div className={`text-xs ${
                 isSuccessful ? 'text-green-700' : 'text-red-700'

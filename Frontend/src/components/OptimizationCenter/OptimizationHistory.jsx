@@ -17,6 +17,7 @@ import DataTable from '../Common/DataTable';
 import Modal from '../Common/Modal';
 import LoadingSpinner from '../Common/LoadingSpinner';
 import SearchBox from '../Common/SearchBox';
+import SafeRenderer from '../Common/SafeRenderer';
 
 const OptimizationHistory = () => {
   const [optimizationRuns, setOptimizationRuns] = useState([]);
@@ -333,7 +334,9 @@ const OptimizationHistory = () => {
             <div>
               <h4 className="font-medium text-red-900 mb-3">Error Details</h4>
               <div className="bg-red-50 border border-red-200 rounded-md p-4">
-                <p className="text-sm text-red-700">{selectedRun.error}</p>
+                <p className="text-sm text-red-700">
+                  <SafeRenderer>{selectedRun.error}</SafeRenderer>
+                </p>
               </div>
             </div>
           )}

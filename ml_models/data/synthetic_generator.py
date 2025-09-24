@@ -1,7 +1,7 @@
 import random
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from typing import List, Dict, Any, Tuple, Optional
 import json
 
@@ -266,7 +266,7 @@ class SyntheticDataGenerator:
                 
                 # Generate delays
                 if random.random() > daily_punctuality:
-                    delay_minutes = random.exponential(10)  # Exponential distribution
+                    delay_minutes = np.random.exponential(10)  # Exponential distribution
                 else:
                     delay_minutes = 0
                 
@@ -348,6 +348,121 @@ class SyntheticDataGenerator:
         }
         
         return dataset
+
+def generate_synthetic_data(num_samples: int = 1000, seed: int = 42) -> List[Dict[str, Any]]:
+    """
+    Generate synthetic training data for ML models
+    
+    Args:
+        num_samples: Number of training samples to generate
+        seed: Random seed for reproducibility
+        
+    Returns:
+        List of training samples with features and target values
+    """
+    generator = SyntheticDataGenerator(seed=seed)
+    
+    # Generate base data
+    num_trains = min(num_samples // 10, 100)
+    num_sections = min(num_samples // 50, 20)
+    
+    trains = generator.generate_train_data(num_trains)
+    sections = generator.generate_section_data(num_sections)
+    historical_data = generator.generate_historical_performance(trains, days=30)
+    
+    # Convert to ML training format
+    training_data = []
+    
+    for performance in historical_data:
+        # Find corresponding train
+        train = next((t for t in trains if t['id'] == performance['train_id']), None)
+        if not train:
+            continue
+            
+        # Select a random section
+        section = random.choice(sections)
+        
+        # Create training sample
+        sample = {
+                # Train features
+                'priority': train['priority'],
+                'length': train['length'],
+                'max_speed': train['max_speed'],
+                'acceleration': train.get('acceleration', 1.0),
+                'deceleration': train.get('deceleration', 1.2),
+                'weight': train.get('weight', train['length'] * 20),
+                'energy_efficiency': train.get('energy_efficiency', 0.8),
+                'punctuality_score': train.get('punctuality_score', 0.8),
+                'train_type': train['train_type'],            # Section features  
+            'section_length': section['length'],
+            'section_max_speed': section['max_speed'],
+            'section_occupancy': random.uniform(0, section['max_occupancy']),
+            'section_capacity': section['max_occupancy'],
+            
+            # Environmental features
+            'weather': performance.get('weather', 'CLEAR'),
+            'operator': train.get('operator', 'DEFAULT_OP'),
+            'service_class': train.get('service_class', 'REGULAR'),
+            
+            # Temporal features
+            'scheduled_departure': performance['scheduled_departure'].isoformat(),
+            'actual_departure': performance['actual_departure'].isoformat() if performance['actual_departure'] else performance['scheduled_departure'].isoformat(),
+            
+            # Target variable
+            'delay_minutes': performance['delay_minutes']
+        }
+        
+        training_data.append(sample)
+    
+    # Ensure we have enough samples by generating additional ones
+    while len(training_data) < num_samples:
+        # Generate additional samples by creating variations
+        if training_data:
+            base_sample = random.choice(training_data[:100])
+            new_sample = base_sample.copy()
+            
+            # Add some variation
+            new_sample['priority'] = max(1, min(5, new_sample['priority'] + random.randint(-1, 1)))
+            new_sample['punctuality_score'] = max(0.5, min(1.0, new_sample['punctuality_score'] + random.uniform(-0.1, 0.1)))
+            new_sample['section_occupancy'] = max(0, min(new_sample['section_capacity'], 
+                                                        new_sample['section_occupancy'] + random.uniform(-0.5, 0.5)))
+            
+            # Adjust delay based on changes
+            delay_adjustment = random.uniform(-2, 3)
+            new_sample['delay_minutes'] = max(0, new_sample['delay_minutes'] + delay_adjustment)
+            
+            # Update timestamps
+            base_time = datetime.now() + timedelta(hours=random.uniform(0, 48))
+            new_sample['scheduled_departure'] = base_time.isoformat()
+            new_sample['actual_departure'] = (base_time + timedelta(minutes=new_sample['delay_minutes'])).isoformat()
+            
+            training_data.append(new_sample)
+        else:
+            # Create a basic sample if no data exists yet
+            basic_sample = {
+                'priority': random.randint(1, 5),
+                'length': random.uniform(150, 400),
+                'max_speed': random.uniform(80, 160),
+                'acceleration': 1.0,
+                'deceleration': 1.2,
+                'weight': random.uniform(3000, 8000),
+                'energy_efficiency': random.uniform(0.6, 0.9),
+                'punctuality_score': random.uniform(0.7, 0.95),
+                'train_type': random.choice(['EXPRESS', 'FREIGHT', 'SUBURBAN']),
+                'section_length': random.uniform(500, 2000),
+                'section_max_speed': random.uniform(80, 120),
+                'section_occupancy': random.uniform(0, 2),
+                'section_capacity': random.randint(1, 3),
+                'weather': random.choice(['CLEAR', 'CLOUDY', 'RAIN', 'FOG']),
+                'operator': 'DEFAULT_OP',
+                'service_class': 'REGULAR',
+                'scheduled_departure': datetime.now().isoformat(),
+                'actual_departure': datetime.now().isoformat(),
+                'delay_minutes': random.uniform(0, 15)
+            }
+            training_data.append(basic_sample)
+    
+    return training_data[:num_samples]
 
 # Usage example and data generation script
 if __name__ == "__main__":

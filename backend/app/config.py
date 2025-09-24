@@ -39,11 +39,16 @@ class Settings(BaseSettings):
     
     # CORS Settings
     ALLOWED_ORIGINS: List[str] = Field(
-        default=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:8080"],
+        default=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:3001", "http://127.0.0.1:3001", "http://localhost:8080"],
         env="ALLOWED_ORIGINS"
     )
     ALLOWED_METHODS: List[str] = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
     ALLOWED_HEADERS: List[str] = ["*"]
+    
+    # Railway Simulation Settings
+    DEFAULT_TRAIN_SPEED: float = Field(default=80.0, env="DEFAULT_TRAIN_SPEED")  # km/h
+    MAX_TRAIN_SPEED: float = Field(default=200.0, env="MAX_TRAIN_SPEED")  # km/h
+    SIMULATION_UPDATE_INTERVAL: int = Field(default=5, env="SIMULATION_UPDATE_INTERVAL")  # seconds
     
     # Database Settings (with SQLite fallback for development)
     DATABASE_URL: Optional[str] = Field(default="sqlite:///./railway_optimization.db", env="DATABASE_URL")
@@ -66,6 +71,11 @@ class Settings(BaseSettings):
     
     # ML Settings
     ML_RETRAIN_INTERVAL_HOURS: int = Field(default=24, env="ML_RETRAIN_INTERVAL_HOURS")
+    
+    # Service Enable Settings
+    ENABLE_OPTIMIZATION_SERVICE: bool = Field(default=True, env="ENABLE_OPTIMIZATION_SERVICE")
+    ENABLE_SIMULATION_SERVICE: bool = Field(default=True, env="ENABLE_SIMULATION_SERVICE")
+    ENABLE_ML_SERVICE: bool = Field(default=True, env="ENABLE_ML_SERVICE")
     
     # Logging Settings
     LOG_LEVEL: str = Field(default="INFO", env="LOG_LEVEL")

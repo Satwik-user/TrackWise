@@ -4,7 +4,30 @@ Train model
 
 from sqlalchemy import Column, Integer, String, Float, DateTime
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
+from enum import Enum
 from app.database import Base
+
+
+class TrainStatus(str, Enum):
+    """Train status enumeration"""
+    STOPPED = "STOPPED"
+    RUNNING = "RUNNING"
+    MOVING = "MOVING"
+    ACTIVE = "ACTIVE"
+    IDLE = "IDLE"
+    MAINTENANCE = "MAINTENANCE"
+    DELAYED = "DELAYED"
+
+
+class TrainType(str, Enum):
+    """Train type enumeration"""
+    PASSENGER = "PASSENGER"
+    FREIGHT = "FREIGHT"
+    EXPRESS = "EXPRESS"
+    LOCAL = "LOCAL"
+    METRO = "METRO"
+    HIGH_SPEED = "HIGH_SPEED"
 
 
 class Train(Base):
@@ -21,3 +44,6 @@ class Train(Base):
     delay_minutes = Column(Float, default=0.0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    schedules = relationship("Schedule", back_populates="train")

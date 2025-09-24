@@ -6,8 +6,6 @@ import numpy as np
 import pandas as pd
 
 from ml_models.models.delay_predictor import DelayPredictor
-from optimization.models.train_model import TrainModel
-from optimization.models.section_model import SectionModel
 
 logger = logging.getLogger(__name__)
 
@@ -47,8 +45,8 @@ class PredictionService:
     
     async def predict_delay(
         self, 
-        train: Union[TrainModel, Dict[str, Any]], 
-        section: Union[SectionModel, Dict[str, Any]], 
+        train: Dict[str, Any], 
+        section: Dict[str, Any], 
         time_horizon: int = 1800
     ) -> Dict[str, Any]:
         """Predict delay for a train in a section"""
@@ -57,15 +55,8 @@ class PredictionService:
                 await self.initialize()
             
             # Convert models to dict if needed
-            if isinstance(train, TrainModel):
-                train_data = train.to_dict()
-            else:
-                train_data = train
-            
-            if isinstance(section, SectionModel):
-                section_data = section.to_dict()
-            else:
-                section_data = section
+            train_data = train
+            section_data = section
             
             # Prepare prediction input
             input_data = [{
@@ -101,20 +92,14 @@ class PredictionService:
     
     async def predict_arrival(
         self, 
-        train: Union[TrainModel, Dict[str, Any]], 
-        section: Union[SectionModel, Dict[str, Any]]
+        train: Dict[str, Any], 
+        section: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Predict arrival time at a section"""
         try:
-            if isinstance(train, TrainModel):
-                train_data = train.to_dict()
-            else:
-                train_data = train
-            
-            if isinstance(section, SectionModel):
-                section_data = section.to_dict()
-            else:
-                section_data = section
+            # Convert models to dict if needed
+            train_data = train
+            section_data = section
             
             # Calculate base travel time
             distance = section_data.get('length', 1000)  # meters
@@ -161,21 +146,15 @@ class PredictionService:
     
     async def predict_conflict(
         self, 
-        train: Union[TrainModel, Dict[str, Any]], 
-        section: Union[SectionModel, Dict[str, Any]], 
+        train: Dict[str, Any], 
+        section: Dict[str, Any], 
         time_horizon: int = 1800
     ) -> Dict[str, Any]:
         """Predict potential conflicts"""
         try:
-            if isinstance(train, TrainModel):
-                train_data = train.to_dict()
-            else:
-                train_data = train
-            
-            if isinstance(section, SectionModel):
-                section_data = section.to_dict()
-            else:
-                section_data = section
+            # Convert models to dict if needed
+            train_data = train
+            section_data = section
             
             # Calculate conflict probability based on multiple factors
             base_conflict_prob = 0.1  # 10% base probability
@@ -286,6 +265,7 @@ class PredictionService:
         predicted_delay *= random_factor
         
         return {
+            'value': max(0, predicted_delay),  # Main prediction value
             'predicted_delay': max(0, predicted_delay),
             'confidence_interval': (max(0, predicted_delay - 2), predicted_delay + 3),
             'uncertainty': 1.5,
@@ -360,3 +340,138 @@ class PredictionService:
                 })
         
         return results
+
+    async def predict_disruption(
+        self, 
+        train: Dict[str, Any], 
+        section: Dict[str, Any], 
+        time_horizon: int = 1800
+    ) -> Dict[str, Any]:
+        """Predict potential disruptions for a train in a section"""
+        try:
+            if not self.models_loaded:
+                await self.initialize()
+            
+            # Convert models to dict if needed
+            train_data = train
+            section_data = section
+            
+            # Calculate disruption probability based on multiple factors
+            factors = []
+            probability = 0.0
+            
+            # Weather factor
+            weather = self._get_current_weather()
+            if weather in ["RAIN", "FOG", "STORM", "SNOW"]:
+                probability += 0.2
+                factors.append(f"adverse_weather_{weather.lower()}")
+            
+            # Traffic density factor
+            traffic_density = self._estimate_traffic_density(section_data)
+            if traffic_density > 0.8:
+                probability += 0.3
+                factors.append("high_traffic_density")
+            
+            # Train characteristics
+            train_priority = train_data.get('priority', 5)
+            if train_priority < 3:  # High priority trains are more disruptive
+                probability += 0.15
+                factors.append("high_priority_train")
+            
+            # Section characteristics
+            section_capacity = section_data.get('max_occupancy', 1)
+            if section_capacity == 1:  # Single track sections are more prone to disruptions
+                probability += 0.2
+                factors.append("single_track_section")
+            
+            # Historical performance
+            punctuality = train_data.get('punctuality_score', 0.9)
+            if punctuality < 0.7:
+                probability += 0.25
+                factors.append("poor_punctuality_history")
+            
+            # Time of day
+            current_hour = datetime.now().hour
+            if current_hour in [7, 8, 9, 17, 18, 19]:  # Peak hours
+                probability += 0.1
+                factors.append("peak_hour_operations")
+            
+            # Cap probability at 1.0
+            probability = min(probability, 1.0)
+            
+            # Determine risk level
+            if probability < 0.2:
+                risk_level = "LOW"
+                recommended_actions = ["Monitor train progress", "Continue normal operations"]
+            elif probability < 0.5:
+                risk_level = "MEDIUM"
+                recommended_actions = [
+                    "Increase monitoring frequency",
+                    "Prepare alternative routes",
+                    "Alert control center"
+                ]
+            elif probability < 0.8:
+                risk_level = "HIGH"
+                recommended_actions = [
+                    "Implement speed restrictions",
+                    "Activate alternative routes",
+                    "Coordinate with neighboring sections",
+                    "Prepare delay notifications"
+                ]
+            else:
+                risk_level = "CRITICAL"
+                recommended_actions = [
+                    "Consider train rerouting",
+                    "Implement emergency protocols",
+                    "Coordinate with all stakeholders",
+                    "Prepare passenger notifications",
+                    "Alert emergency services if needed"
+                ]
+            
+            return {
+                'probability': probability,
+                'risk_level': risk_level,
+                'factors': factors,
+                'recommended_actions': recommended_actions,
+                'prediction_time': datetime.now().isoformat(),
+                'time_horizon_minutes': time_horizon // 60
+            }
+            
+        except Exception as e:
+            logger.error(f"Error predicting disruption: {str(e)}")
+            return {
+                'probability': 0.3,  # Default moderate risk
+                'risk_level': 'MEDIUM',
+                'factors': ['prediction_error'],
+                'recommended_actions': ['Manual assessment required'],
+                'prediction_time': datetime.now().isoformat(),
+                'error': str(e)
+            }
+
+    async def train_models(self) -> Dict[str, Any]:
+        """Train ML models using synthetic data"""
+        try:
+            # Generate synthetic training data
+            from ml_models.data.synthetic_generator import generate_synthetic_data
+            
+            logger.info("Generating synthetic training data...")
+            training_data = generate_synthetic_data(num_samples=1000)
+            
+            # Train delay predictor
+            logger.info("Training delay predictor...")
+            metrics = self.delay_predictor.train(training_data)
+            
+            return {
+                'delay_predictor_metrics': metrics,
+                'training_samples': len(training_data),
+                'status': 'success',
+                'timestamp': datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"Error training models: {str(e)}")
+            return {
+                'status': 'failed',
+                'error': str(e),
+                'timestamp': datetime.now().isoformat()
+            }

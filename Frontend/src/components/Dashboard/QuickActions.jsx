@@ -45,7 +45,7 @@ const QuickActions = () => {
           toast.error('Unknown action');
       }
     } catch (error) {
-      toast.error(`Failed to ${actionType.replace('_', ' ')}: ${error.message}`);
+      toast.error(`Failed to ${actionType.replace('_', ' ')}: ${typeof error?.message === 'string' ? error.message : JSON.stringify(error)}`);
     } finally {
       setIsLoading(prev => ({ ...prev, [actionType]: false }));
     }

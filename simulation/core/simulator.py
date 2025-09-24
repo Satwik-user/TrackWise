@@ -15,7 +15,7 @@ from simulation.core.state_manager import StateManager
 logger = logging.getLogger(__name__)
 
 class TrafficSimulator:
-    """Main traffic simulation engine"""
+    """Enhanced traffic simulation engine with realistic physics"""
     
     def __init__(self):
         self.event_manager = EventManager()
@@ -23,10 +23,18 @@ class TrafficSimulator:
         self.trains = {}
         self.sections = {}
         self.simulation_time = datetime.now()
-        self.time_step = 1  # seconds
+        self.time_step = 0.1  # seconds - smaller time step for better physics
         self.is_running = False
         self.events_log = []
         self.metrics_log = []
+        self.physics_enabled = True
+        self.safety_systems_enabled = True
+        
+        # Simulation parameters
+        self.max_simulation_speed = 10.0  # Real time multiplier
+        self.collision_detection_enabled = True
+        self.automatic_train_protection = True
+        self.energy_calculation_enabled = True
         
     async def run_scenario(
         self,
@@ -326,19 +334,165 @@ class TrafficSimulator:
         )
     
     async def _update_train_states(self):
-        """Update all train states"""
-        for train in self.trains.values():
-            if train.status == "RUNNING":
-                # Update position based on speed and time step
-                if train.current_speed > 0:
-                    distance_moved = (train.current_speed * 1000 / 3600) * self.time_step  # meters
-                    train.current_position += distance_moved
-                
-                # Check if train has reached section end
+        """Update all train states using enhanced physics"""
+        for train_id, train in self.trains.items():
+            if train.status in ["RUNNING", "BRAKING"]:
+                # Get current section
                 current_section = self.sections.get(train.current_section_id)
-                if current_section and train.current_position >= current_section.length:
-                    # Train has completed this section
-                    await self._handle_section_completion(train, current_section)
+                if not current_section:
+                    continue
+                
+                # Calculate physics parameters
+                gradient = current_section.gradient
+                speed_limit = current_section.get_effective_speed_limit()
+                
+                # Set target speed based on conditions
+                if self.safety_systems_enabled:
+                    # Check for conflicts ahead
+                    safe_speed = self._calculate_safe_speed(train, current_section)
+                    train.target_speed = min(speed_limit, safe_speed)
+                else:
+                    train.target_speed = min(train.max_speed, speed_limit)
+                
+                # Update physics state
+                if self.physics_enabled:
+                    train.update_physics_state(self.time_step, gradient, speed_limit)
+                else:
+                    # Simple update for performance
+                    self._simple_train_update(train, current_section)
+                
+                # Check if train has completed the section
+                if train.current_position >= current_section.length:
+                    await self._handle_train_section_completion(train, current_section)
+                
+                # Update energy consumption for section
+                if self.energy_calculation_enabled:
+                    current_section.energy_consumed += train.energy_consumed * self.time_step / 3600
+                
+                # Log significant events
+                if abs(train.current_acceleration) > 1.0:  # High acceleration/deceleration
+                    self._log_event("TRAIN_DYNAMICS", {
+                        'train_id': train_id,
+                        'acceleration': train.current_acceleration,
+                        'speed': train.current_speed,
+                        'position': train.current_position,
+                        'section_id': current_section.id
+                    })
+    
+    def _calculate_safe_speed(self, train, section) -> float:
+        """Calculate safe speed considering trains ahead"""
+        # Check for trains ahead in same section
+        min_safe_distance = 200.0  # meters
+        
+        for other_train_id in section.trains_in_section:
+            if other_train_id == train.id:
+                continue
+            
+            other_train = self.trains.get(other_train_id)
+            if not other_train:
+                continue
+            
+            # Calculate distance to other train
+            distance_ahead = other_train.current_position - train.current_position
+            
+            if 0 < distance_ahead < min_safe_distance:
+                # Train ahead - calculate safe following speed
+                relative_speed = train.current_speed - other_train.current_speed
+                
+                if relative_speed > 0:  # Approaching
+                    # Calculate braking distance needed
+                    braking_distance = train.get_braking_distance()
+                    
+                    if distance_ahead < braking_distance + 50:  # 50m safety margin
+                        # Need to slow down
+                        safe_speed = max(0, other_train.current_speed - 10)  # 10 km/h slower
+                        return safe_speed
+        
+        # Check next section capacity
+        next_section_id = self._get_next_section_id(train)
+        if next_section_id:
+            next_section = self.sections.get(next_section_id)
+            if next_section and not next_section.can_accept_train(train):
+                # Next section blocked - prepare to stop
+                distance_to_end = section.length - train.current_position
+                braking_distance = train.get_braking_distance()
+                
+                if distance_to_end < braking_distance + 100:  # 100m safety margin
+                    return 0.0  # Stop before section end
+        
+        return train.max_speed  # No restrictions
+    
+    def _simple_train_update(self, train, section):
+        """Simple train update for performance mode"""
+        target_speed = min(train.target_speed, section.get_effective_speed_limit())
+        
+        # Simple acceleration/deceleration
+        if train.current_speed < target_speed:
+            train.current_speed = min(target_speed, train.current_speed + train.acceleration * self.time_step * 3.6)
+        elif train.current_speed > target_speed:
+            train.current_speed = max(target_speed, train.current_speed - train.deceleration * self.time_step * 3.6)
+        
+        # Update position
+        speed_ms = train.current_speed / 3.6
+        train.current_position += speed_ms * self.time_step
+    
+    async def _handle_train_section_completion(self, train, current_section):
+        """Handle train completing a section"""
+        # Remove from current section
+        current_section.remove_train(train.id)
+        
+        # Get next section
+        next_section_id = self._get_next_section_id(train)
+        
+        if next_section_id:
+            next_section = self.sections.get(next_section_id)
+            if next_section and next_section.can_accept_train(train):
+                # Move to next section
+                next_section.add_train(train)
+                train.current_position = 0.0
+                train.current_route_index += 1
+                
+                self._log_event("TRAIN_SECTION_CHANGE", {
+                    'train_id': train.id,
+                    'from_section': current_section.id,
+                    'to_section': next_section.id,
+                    'route_progress': f"{train.current_route_index}/{len(train.route)}"
+                })
+            else:
+                # Cannot enter next section - stop at current position
+                train.status = "STOPPED"
+                train.current_position = current_section.length  # At section boundary
+                train.target_speed = 0.0
+                
+                self._log_event("TRAIN_BLOCKED", {
+                    'train_id': train.id,
+                    'blocked_at_section': current_section.id,
+                    'next_section': next_section_id,
+                    'reason': 'section_occupied' if next_section else 'invalid_route'
+                })
+        else:
+            # End of route
+            train.status = "COMPLETED"
+            train.actual_arrival = self.simulation_time
+            
+            # Calculate final delays
+            if train.scheduled_arrival:
+                train.arrival_delay = (train.actual_arrival - train.scheduled_arrival).total_seconds() / 60
+                train.total_delay = train.departure_delay + train.arrival_delay
+            
+            self._log_event("TRAIN_COMPLETED", {
+                'train_id': train.id,
+                'arrival_delay': train.arrival_delay,
+                'total_delay': train.total_delay,
+                'energy_consumed': train.energy_consumed,
+                'distance_traveled': train.distance_traveled
+            })
+    
+    def _get_next_section_id(self, train) -> Optional[int]:
+        """Get the next section ID in train's route"""
+        if train.current_route_index + 1 < len(train.route):
+            return train.route[train.current_route_index + 1]
+        return None
     
     async def _update_section_states(self):
         """Update all section states"""

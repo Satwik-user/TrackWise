@@ -19,6 +19,7 @@ import {
   ExclamationCircleIcon
 } from '@heroicons/react/24/outline';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import SafeRenderer from '../Common/SafeRenderer';
 
 const OptimizationResults = ({ result, isLoading, onRerun }) => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -425,16 +426,16 @@ const DecisionsTab = ({ decisions, selectedDecision, onSelectDecision }) => {
                     
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900">
-                        {decision.type.replace('_', ' ')}
+                        <SafeRenderer>{decision.type.replace('_', ' ')}</SafeRenderer>
                       </p>
                       <p className="text-xs text-gray-500 truncate">
-                        Train {decision.train_id} • Section {decision.section_id}
+                        Train <SafeRenderer>{decision.train_id}</SafeRenderer> • Section <SafeRenderer>{decision.section_id}</SafeRenderer>
                       </p>
                     </div>
                     
                     <div className="text-right">
                       <p className="text-xs text-gray-500">
-                        {decision.expected_improvement || 'N/A'}
+                        <SafeRenderer>{decision.expected_improvement || 'N/A'}</SafeRenderer>
                       </p>
                     </div>
                   </div>
@@ -473,19 +474,19 @@ const DecisionDetails = ({ decision }) => {
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="text-gray-600">Type:</span>
-            <span className="font-medium">{decision.type.replace('_', ' ')}</span>
+            <span className="font-medium"><SafeRenderer>{decision.type.replace('_', ' ')}</SafeRenderer></span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Train ID:</span>
-            <span className="font-medium">{decision.train_id}</span>
+            <span className="font-medium"><SafeRenderer>{decision.train_id}</SafeRenderer></span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Section ID:</span>
-            <span className="font-medium">{decision.section_id}</span>
+            <span className="font-medium"><SafeRenderer>{decision.section_id}</SafeRenderer></span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Priority:</span>
-            <span className="font-medium">{decision.priority || 'Normal'}</span>
+            <span className="font-medium"><SafeRenderer>{decision.priority || 'Normal'}</SafeRenderer></span>
           </div>
         </div>
       </div>
@@ -494,9 +495,9 @@ const DecisionDetails = ({ decision }) => {
         <div>
           <h4 className="text-sm font-medium text-gray-700 mb-2">Constraints</h4>
           <div className="bg-gray-50 rounded-lg p-3">
-            <pre className="text-xs text-gray-700 whitespace-pre-wrap">
-              {JSON.stringify(decision.constraints, null, 2)}
-            </pre>
+            <div className="text-xs text-gray-700 whitespace-pre-wrap">
+              <SafeRenderer>{decision.constraints}</SafeRenderer>
+            </div>
           </div>
         </div>
       )}
@@ -684,11 +685,15 @@ const PerformanceTab = ({ result }) => {
               result.constraint_violations.map((violation, index) => (
                 <div key={index} className="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-lg">
                   <div>
-                    <p className="text-sm font-medium text-red-900">{violation.constraint}</p>
-                    <p className="text-xs text-red-700">{violation.description}</p>
+                    <p className="text-sm font-medium text-red-900">
+                      <SafeRenderer>{violation.constraint}</SafeRenderer>
+                    </p>
+                    <p className="text-xs text-red-700">
+                      <SafeRenderer>{violation.description}</SafeRenderer>
+                    </p>
                   </div>
                   <span className="text-sm font-medium text-red-600">
-                    {violation.severity}
+                    <SafeRenderer>{violation.severity}</SafeRenderer>
                   </span>
                 </div>
               ))

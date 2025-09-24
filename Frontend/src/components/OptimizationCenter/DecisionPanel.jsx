@@ -13,6 +13,7 @@ import {
 } from '@heroicons/react/24/outline';
 import LoadingSpinner from '../Common/LoadingSpinner';
 import ConfirmationDialog from '../Common/ConfirmationDialog';
+import SafeRenderer from '../Common/SafeRenderer';
 
 const DecisionPanel = ({ optimizationResults = null, onApplyDecision, onRejectDecision }) => {
   const [decisions, setDecisions] = useState([]);
@@ -159,12 +160,12 @@ const DecisionPanel = ({ optimizationResults = null, onApplyDecision, onRejectDe
         <div className="flex flex-wrap gap-1">
           {decision.affectedTrains && decision.affectedTrains.map(trainId => (
             <span key={trainId} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-              Train {trainId}
+              Train <SafeRenderer>{trainId}</SafeRenderer>
             </span>
           ))}
           {decision.affectedSections && decision.affectedSections.map(sectionId => (
             <span key={sectionId} className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-              Section {sectionId}
+              Section <SafeRenderer>{sectionId}</SafeRenderer>
             </span>
           ))}
         </div>
@@ -237,7 +238,9 @@ const DecisionPanel = ({ optimizationResults = null, onApplyDecision, onRejectDe
         <div className="text-center py-8">
           <ExclamationTriangleIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">Error Generating Decisions</h3>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <p className="text-gray-600 mb-4">
+            <SafeRenderer>{error}</SafeRenderer>
+          </p>
           <button
             onClick={() => optimizationResults && generateDecisions(optimizationResults)}
             className="btn btn-primary"

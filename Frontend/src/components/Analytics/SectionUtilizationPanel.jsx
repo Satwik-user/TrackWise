@@ -41,7 +41,7 @@ const SectionUtilizationPanel = ({ timeRange = '24h' }) => {
   };
 
   if (loading) return <LoadingSpinner />;
-  if (error) return <div className="text-red-600">Error: {error}</div>;
+  if (error) return <div className="text-red-600">Error: {typeof error === 'string' ? error : JSON.stringify(error)}</div>;
 
   const chartTabs = [
     { id: 'utilization', name: 'Utilization', icon: ChartBarIcon },

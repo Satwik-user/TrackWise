@@ -14,7 +14,7 @@ from enum import Enum
 
 from app.models.train import Train, TrainStatus
 from app.models.section import Section, SectionStatus
-from app.models.optimization import OptimizationRun, OptimizationDecision
+# from app.models.optimization import OptimizationRun, OptimizationDecision  # TODO: Create optimization models
 from app.services.train_service import train_service
 from app.services.section_service import section_service
 from app.utils.exceptions import ValidationError, NotFoundError
@@ -78,6 +78,11 @@ class SimulationEngine:
         self.metrics = None
         self._stop_flag = False
         self._pause_flag = False
+        # Initialize data structures
+        self.trains = {}
+        self.sections = {}
+        self.section_occupancy = {}
+        self.metrics = None
     
     async def initialize(
         self,
@@ -250,6 +255,8 @@ class SimulationEngine:
             await self._handle_section_maintenance(db, event)
         elif event.event_type == "delay_incident":
             await self._handle_delay_incident(db, event)
+        elif event.event_type == "maintenance_complete":
+            await self._handle_maintenance_complete(db, event)
         else:
             logger.warning(f"Unknown event type: {event.event_type}")
     
@@ -376,6 +383,20 @@ class SimulationEngine:
         train.status = TrainStatus.DELAYED
         
         logger.debug(f"Train {train.train_number} delayed by {delay_minutes} minutes due to incident")
+    
+    async def _handle_maintenance_complete(self, db: AsyncSession, event: SimulationEvent):
+        """Handle maintenance completion event"""
+        
+        section_id = event.entity_id
+        section = self.sections.get(section_id)
+        
+        if not section:
+            return
+        
+        # Set section back to available
+        section.status = SectionStatus.AVAILABLE
+        
+        logger.debug(f"Section {section.section_code} maintenance completed")
     
     async def _advance_time(self):
         """Advance simulation time based on speed setting"""
@@ -564,7 +585,7 @@ class SimulationService:
     async def run_optimization_simulation(
         self,
         db: AsyncSession,
-        optimization_run: OptimizationRun,
+        optimization_run: dict,  # TODO: Use proper OptimizationRun model
         scenario_config: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Run simulation with optimization decisions"""
@@ -594,7 +615,7 @@ class SimulationService:
     async def _apply_optimization_decisions(
         self,
         engine: SimulationEngine,
-        optimization_run: OptimizationRun
+        optimization_run: dict  # TODO: Use proper OptimizationRun model
     ):
         """Apply optimization decisions to simulation"""
         

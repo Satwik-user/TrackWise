@@ -124,7 +124,7 @@ const TrainImportExport = ({ isOpen, onClose, onImportComplete }) => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      alert(`Export failed: ${error.message}`);
+      alert(`Export failed: ${typeof error?.message === 'string' ? error.message : JSON.stringify(error)}`);
     } finally {
       setIsExporting(false);
     }
@@ -145,7 +145,7 @@ const TrainImportExport = ({ isOpen, onClose, onImportComplete }) => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      alert(`Template download failed: ${error.message}`);
+      alert(`Template download failed: ${typeof error?.message === 'string' ? error.message : JSON.stringify(error)}`);
     }
   };
 
@@ -246,7 +246,7 @@ const TrainImportExport = ({ isOpen, onClose, onImportComplete }) => {
                 {importResults.errors.slice(0, 5).map((error, index) => (
                   <li key={index} className="flex items-start">
                     <span className="font-mono text-xs mr-2">Row {error.row}:</span>
-                    <span>{error.message}</span>
+                    <span>{typeof error?.message === 'string' ? error.message : JSON.stringify(error)}</span>
                   </li>
                 ))}
                 {importResults.errors.length > 5 && (

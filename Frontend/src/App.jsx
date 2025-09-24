@@ -2,9 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
+// Context Providers
+import { WebSocketProvider } from './context/WebSocketContext';
+
 // Layout Components
 import Sidebar from './components/Layout/Sidebar';
 import Header from './components/Layout/Header';
+import ErrorBoundary from './components/Common/ErrorBoundary';
+import AutoLogin from './components/AutoLogin';
 
 // Page Components  
 import Dashboard from './pages/Dashboard';
@@ -14,6 +19,13 @@ import OptimizationCenter from './pages/OptimizationCenter';
 import Analytics from './pages/Analytics';
 import RealTimeView from './pages/RealTimeView';
 import Settings from './pages/Settings';
+import TestValidationErrors from './pages/TestValidationErrors';
+
+// New Advanced Components
+import SimulationControlPanel from './components/Simulation/SimulationControlPanel';
+import DecisionSupportDashboard from './components/Decisions/DecisionSupportDashboard';
+import MLPredictionCenter from './components/Predictions/MLPredictionCenter';
+import TrainControlCenter from './components/Trains/TrainControlCenter';
 
 // Services
 import { authService } from './services/authService';
@@ -30,12 +42,22 @@ function App() {
     checkAuthStatus();
   }, []);
 
-  const checkAuthStatus = async () => {
+    const checkAuthStatus = async () => {
     try {
-      const token = localStorage.getItem('token');
+      // For development - auto login with admin credentials
+      console.log('Auto-logging in with admin credentials...');
+      const response = await authService.login({ username: 'admin', password: 'admin123' });
+      setUser(response.user);
+      setIsAuthenticated(true);
+      console.log('Auto-login successful');
+    } catch (error) {
+      console.error('Auto-login failed:', error);
+      // Fallback: check existing token
+      const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
       if (token) {
         // Verify token with backend
-        const response = await fetch('/api/auth/me', {
+        const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -46,15 +68,13 @@ function App() {
           setUser(userData);
           setIsAuthenticated(true);
         } else {
+          // Token invalid, remove it
           localStorage.removeItem('token');
+          localStorage.removeItem('auth_token');
         }
       }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      localStorage.removeItem('token');
-    } finally {
-      setIsLoading(false);
     }
+    setIsLoading(false);
   };
 
   const handleLogin = async (credentials) => {
@@ -90,48 +110,107 @@ function App() {
   }
 
   return (
-    <Router>
-      <div className="h-screen flex overflow-hidden bg-gray-100">
-        {/* Sidebar */}
-        <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
-        
-        {/* Main content */}
-        <div className="flex flex-col w-0 flex-1 overflow-hidden">
-          <Header 
-            user={user} 
-            onLogout={handleLogout}
-            onMenuClick={() => setSidebarOpen(true)}
-          />
+    <WebSocketProvider>
+      <Router>
+        <div className="h-screen flex overflow-hidden bg-gray-100">
+          {/* Sidebar */}
+          <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
           
-          <main className="flex-1 relative overflow-y-auto focus:outline-none">
-            <div className="py-6">
-              <Routes>
-                <Route path="/" element={<Navigate to="/dashboard" />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/trains" element={<TrainManagement />} />
-                <Route path="/sections" element={<SectionManagement />} />
-                <Route path="/optimization" element={<OptimizationCenter />} />
-                <Route path="/analytics" element={<Analytics />} />
-                <Route path="/realtime" element={<RealTimeView />} />
-                <Route path="/settings" element={<Settings />} />
-              </Routes>
-            </div>
-          </main>
+          {/* Main content */}
+          <div className="flex flex-col w-0 flex-1 overflow-hidden">
+            <Header 
+              user={user} 
+              onLogout={handleLogout}
+              onMenuClick={() => setSidebarOpen(true)}
+            />
+            
+            <main className="flex-1 relative overflow-y-auto focus:outline-none">
+              <div className="py-6">
+                <Routes>
+                  <Route path="/" element={<Navigate to="/dashboard" />} />
+                  <Route path="/dashboard" element={
+                    <ErrorBoundary fallbackMessage="Dashboard is temporarily unavailable">
+                      <Dashboard />
+                    </ErrorBoundary>
+                  } />
+                  <Route path="/trains" element={
+                    <ErrorBoundary fallbackMessage="Train Management is temporarily unavailable">
+                      <TrainManagement />
+                    </ErrorBoundary>
+                  } />
+                  <Route path="/sections" element={
+                    <ErrorBoundary fallbackMessage="Section Management is temporarily unavailable">
+                      <SectionManagement />
+                    </ErrorBoundary>
+                  } />
+                  <Route path="/optimization" element={
+                    <ErrorBoundary fallbackMessage="Optimization Center is temporarily unavailable">
+                      <OptimizationCenter />
+                    </ErrorBoundary>
+                  } />
+                  <Route path="/analytics" element={
+                    <ErrorBoundary fallbackMessage="Analytics is temporarily unavailable">
+                      <Analytics />
+                    </ErrorBoundary>
+                  } />
+                  <Route path="/realtime" element={
+                    <ErrorBoundary fallbackMessage="Real-time View is temporarily unavailable">
+                      <RealTimeView />
+                    </ErrorBoundary>
+                  } />
+                  <Route path="/settings" element={
+                    <ErrorBoundary fallbackMessage="Settings is temporarily unavailable">
+                      <Settings />
+                    </ErrorBoundary>
+                  } />
+                  <Route path="/test-validation" element={
+                    <ErrorBoundary fallbackMessage="Test page is temporarily unavailable">
+                      <TestValidationErrors />
+                    </ErrorBoundary>
+                  } />
+                  
+                  {/* Advanced Control Routes */}
+                  <Route path="/simulation-control" element={
+                    <ErrorBoundary fallbackMessage="Simulation Control is temporarily unavailable">
+                      <AutoLogin>
+                        <SimulationControlPanel />
+                      </AutoLogin>
+                    </ErrorBoundary>
+                  } />
+                  <Route path="/decision-support" element={
+                    <ErrorBoundary fallbackMessage="Decision Support is temporarily unavailable">
+                      <DecisionSupportDashboard />
+                    </ErrorBoundary>
+                  } />
+                  <Route path="/ml-predictions" element={
+                    <ErrorBoundary fallbackMessage="ML Prediction Center is temporarily unavailable">
+                      <MLPredictionCenter />
+                    </ErrorBoundary>
+                  } />
+                  <Route path="/train-control" element={
+                    <ErrorBoundary fallbackMessage="Train Control Center is temporarily unavailable">
+                      <TrainControlCenter />
+                    </ErrorBoundary>
+                  } />
+                </Routes>
+              </div>
+            </main>
+          </div>
         </div>
-      </div>
-      
-      {/* Toast notifications */}
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: '#363636',
-            color: '#fff',
-          },
-        }}
-      />
-    </Router>
+        
+        {/* Toast notifications */}
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#363636',
+              color: '#fff',
+            },
+          }}
+        />
+      </Router>
+    </WebSocketProvider>
   );
 }
 
@@ -196,7 +275,7 @@ const LoginPage = ({ onLogin }) => {
 
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-              {error}
+              {typeof error === 'string' ? error : JSON.stringify(error)}
             </div>
           )}
 

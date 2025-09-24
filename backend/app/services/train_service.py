@@ -21,7 +21,7 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 
-class TrainService(BaseService[Train, TrainCreate, TrainUpdate]):
+class TrainService(BaseService[Train]):
     """Service for train management operations"""
     
     def __init__(self):

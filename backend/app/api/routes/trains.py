@@ -6,8 +6,12 @@ from typing import Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from pydantic import BaseModel, Field
 from datetime import datetime
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_current_active_user
+from app.models.train import Train
+from app.database import AsyncSessionLocal
 
 router = APIRouter()
 
@@ -161,19 +165,48 @@ async def get_trains(
 ) -> List[TrainResponse]:
     """Get all trains with optional filtering"""
     
-    trains = MOCK_TRAINS.copy()
-    
-    # Apply filters
-    if train_type:
-        trains = [t for t in trains if t["train_type"].lower() == train_type.lower()]
-    
-    if status:
-        trains = [t for t in trains if t["status"].lower() == status.lower()]
-    
-    # Apply pagination
-    trains = trains[skip: skip + limit]
-    
-    return [TrainResponse(**train) for train in trains]
+    # Use database-backed approach
+    async with AsyncSessionLocal() as session:
+        # Build query
+        stmt = select(Train)
+        
+        # Apply filters
+        if train_type:
+            stmt = stmt.where(Train.train_type.ilike(f"%{train_type}%"))
+        
+        if status:
+            stmt = stmt.where(Train.status.ilike(f"%{status}%"))
+        
+        # Apply pagination
+        stmt = stmt.offset(skip).limit(limit)
+        
+        # Execute query
+        result = await session.execute(stmt)
+        trains = result.scalars().all()
+        
+        # Convert to mock-style format for compatibility
+        train_responses = []
+        for train in trains:
+            train_data = {
+                "id": train.id,
+                "train_number": train.train_number,
+                "name": train.name or "",
+                "train_type": train.train_type,
+                "status": train.status,
+                "max_speed_kmh": train.max_speed_kmh,
+                "current_speed": train.current_speed,
+                "current_section": train.current_section,
+                "delay_minutes": train.delay_minutes,
+                "capacity_passengers": None,
+                "capacity_cargo_tons": None,
+                "operator": "TrackWise Railways",
+                "priority_level": 1,
+                "created_at": train.created_at,
+                "updated_at": train.updated_at or train.created_at
+            }
+            train_responses.append(TrainResponse(**train_data))
+        
+        return train_responses
 
 
 @router.get("/{train_id}", response_model=TrainResponse)

@@ -327,7 +327,7 @@ class WebSocketService extends EventEmitter {
   getDefaultUrl() {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = process.env.REACT_APP_WS_URL || 
-                 `${protocol}//${window.location.host}/ws`;
+                 `${protocol}//${window.location.host}/api/ws/connect`;
     return host;
   }
 

@@ -5,12 +5,17 @@ Complete working version with all imports and dependencies resolved
 
 import asyncio
 import logging
+import sys
 from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Dict, Any
 from pathlib import Path
 
+# Add parent directory to Python path for imports
+sys.path.append(str(Path(__file__).parent.parent.parent))
+
 from fastapi import FastAPI, Request, Response, HTTPException, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -46,10 +51,20 @@ try:
     from app.api.routes.optimization import router as optimization_router
     from app.api.routes.analytics import router as analytics_router
     from app.api.routes.websocket import router as websocket_router
+    from app.api.routes.decisions import router as decisions_router
+    from app.api.routes.simulation import router as simulation_router
     routes_available = True
 except ImportError as e:
     logger.warning(f"Some routes not available: {e}")
     routes_available = False
+
+# Try to import predictions separately (requires ML dependencies)
+try:
+    from app.api.routes.predictions import router as predictions_router
+    predictions_available = True
+except ImportError as e:
+    logger.warning(f"Predictions routes not available: {e}")
+    predictions_available = False
 
 # Import services for initialization - with fallback
 try:
@@ -264,6 +279,37 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     )
 
 
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Handle Pydantic validation errors"""
+    logger.warning(
+        f"Validation error: {str(exc)}",
+        extra={
+            "request_path": request.url.path,
+            "request_method": request.method,
+            "validation_errors": exc.errors()
+        }
+    )
+    
+    # Convert validation errors to safe format
+    errors = []
+    for error in exc.errors():
+        errors.append({
+            "field": ".".join(str(loc) for loc in error.get("loc", [])),
+            "message": error.get("msg", "Validation error"),
+            "type": error.get("type", "validation_error")
+        })
+    
+    return JSONResponse(
+        status_code=422,
+        content={
+            "error": "Validation Error", 
+            "message": "Request validation failed",
+            "errors": errors
+        }
+    )
+
+
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
     """Handle unexpected exceptions"""
@@ -358,6 +404,10 @@ if routes_available:
         app.include_router(sections_router, prefix="/api/sections", tags=["Sections"])
         app.include_router(optimization_router, prefix="/api/optimization", tags=["Optimization"])
         app.include_router(analytics_router, prefix="/api/analytics", tags=["Analytics"])
+        app.include_router(simulation_router, prefix="/api/simulation", tags=["Simulation"])
+        app.include_router(decisions_router, prefix="/api/decisions", tags=["Decision Support"])
+        if predictions_available:
+            app.include_router(predictions_router, prefix="/api/predictions", tags=["ML Predictions"])
         if websocket_available:
             app.include_router(websocket_router, prefix="/ws", tags=["WebSocket"])
         logger.info("All API routes loaded successfully")
@@ -502,6 +552,11 @@ async def start_background_tasks():
                 ml_retraining_task()
             )
         
+        # Train movement simulation task
+        background_tasks["train_simulation"] = asyncio.create_task(
+            train_simulation_task()
+        )
+        
         # Cleanup task
         background_tasks["cleanup"] = asyncio.create_task(
             cleanup_task()
@@ -580,6 +635,82 @@ async def cleanup_task():
             break
         except Exception as e:
             logger.error(f"Cleanup task error: {e}")
+
+
+async def train_simulation_task():
+    """Background task for live train movement simulation"""
+    import random
+    from app.database import AsyncSessionLocal
+    from app.models.train import Train
+    from app.models.section import Section
+    from app.core.websocket import websocket_manager
+    from sqlalchemy import select, update
+    
+    while True:
+        try:
+            if services_available:
+                async with AsyncSessionLocal() as session:
+                    # Get all active trains
+                    trains_result = await session.execute(
+                        select(Train).where(Train.train_type.in_(["PASSENGER", "FREIGHT"]))
+                    )
+                    trains = trains_result.scalars().all()
+                    
+                    # Get all sections
+                    sections_result = await session.execute(select(Section))
+                    sections = sections_result.scalars().all()
+                    section_ids = [s.id for s in sections]
+                    
+                    if trains and section_ids:
+                        # Update train positions and speeds
+                        train_updates = []
+                        for train in trains:
+                            # Simulate realistic train movement
+                            if train.status == "RUNNING":
+                                # Randomly change speed within realistic range
+                                speed_variation = random.uniform(-5, 10)
+                                new_speed = max(0, min(train.max_speed_kmh, 
+                                                    train.current_speed + speed_variation))
+                                
+                                # Occasionally move to a different section
+                                if random.random() < 0.05:  # 5% chance to move sections
+                                    new_section = random.choice(section_ids)
+                                    train.current_section = new_section
+                                
+                                train.current_speed = new_speed
+                                
+                                # Add small random delay variations
+                                delay_change = random.uniform(-0.5, 1.0)
+                                train.delay_minutes = max(0, train.delay_minutes + delay_change)
+                                
+                                train_updates.append({
+                                    "id": train.id,
+                                    "train_number": train.train_number,
+                                    "current_speed": new_speed,
+                                    "current_section": train.current_section,
+                                    "delay_minutes": train.delay_minutes,
+                                    "status": train.status
+                                })
+                        
+                        # Broadcast live updates via WebSocket
+                        if train_updates:
+                            await websocket_manager.broadcast_json({
+                                "type": "train_positions_update",
+                                "timestamp": datetime.utcnow().isoformat(),
+                                "trains": train_updates
+                            })
+                        
+                        # Commit changes to database
+                        await session.commit()
+                        
+            # Update every 5 seconds for live demo
+            await asyncio.sleep(5)
+                
+        except asyncio.CancelledError:
+            break
+        except Exception as e:
+            logger.error(f"Train simulation task error: {e}")
+            await asyncio.sleep(10)
 
 
 # Development server

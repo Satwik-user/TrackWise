@@ -199,17 +199,84 @@ async def get_optimizations(
     # Apply pagination
     optimizations = optimizations[skip: skip + limit]
     
-    # Calculate duration for completed optimizations
+    # Calculate duration for completed optimizations and prepare data for model
+    result = []
     for opt in optimizations:
+        duration = None
         if opt["completed_at"] and opt["started_at"]:
             duration = (opt["completed_at"] - opt["started_at"]).total_seconds()
-            opt["duration_seconds"] = duration
-        else:
-            opt["duration_seconds"] = None
+        
+        # Create summary object with only the fields the model expects
+        summary_data = {
+            "id": opt["id"],
+            "name": opt["name"], 
+            "optimization_type": opt["optimization_type"],
+            "status": opt["status"],
+            "progress_percentage": opt["progress_percentage"],
+            "created_at": opt["created_at"],
+            "completed_at": opt.get("completed_at"),
+            "duration_seconds": duration
+        }
+        result.append(OptimizationSummary(**summary_data))
     
-    return [OptimizationSummary(**opt) for opt in optimizations]
+    return result
 
 
+@router.get("/decisions", response_model=List[Dict[str, Any]])
+async def get_optimization_decisions(
+    skip: int = Query(0, ge=0, description="Number of records to skip"),
+    limit: int = Query(100, ge=1, le=1000, description="Number of records to return"),
+    current_user: dict = Depends(get_current_active_user)
+) -> List[Dict[str, Any]]:
+    """Get recent optimization decisions"""
+    
+    # Mock decisions data
+    mock_decisions = [
+        {
+            "id": 1,
+            "optimization_id": 1,
+            "decision_type": "route_adjustment",
+            "description": "Reroute Train 1045 via Section B to avoid congestion",
+            "status": "implemented",
+            "created_at": datetime.utcnow() - timedelta(minutes=15),
+            "impact": "Reduced delay by 8 minutes"
+        },
+        {
+            "id": 2,
+            "optimization_id": 1,
+            "decision_type": "schedule_change",
+            "description": "Delay departure of Train 2033 by 5 minutes",
+            "status": "pending",
+            "created_at": datetime.utcnow() - timedelta(minutes=30),
+            "impact": "Expected to improve overall throughput"
+        },
+        {
+            "id": 3,
+            "optimization_id": 2,
+            "decision_type": "speed_adjustment",
+            "description": "Increase speed limit on Section C to 80 km/h",
+            "status": "implemented",
+            "created_at": datetime.utcnow() - timedelta(hours=1),
+            "impact": "Reduced travel time by 12 minutes"
+        }
+    ]
+    
+    # Apply pagination
+    decisions = mock_decisions[skip: skip + limit]
+    
+    return decisions
+
+
+@router.get("/runs", response_model=List[OptimizationSummary])
+async def get_optimization_runs(
+    skip: int = Query(0, ge=0, description="Number of records to skip"),
+    limit: int = Query(100, ge=1, le=1000, description="Number of records to return"),
+    status: Optional[OptimizationStatus] = Query(None, description="Filter by status"),
+    optimization_type: Optional[OptimizationType] = Query(None, description="Filter by type"),
+    current_user: dict = Depends(get_current_active_user)
+) -> List[OptimizationSummary]:
+    """Get all optimization runs with optional filtering - alias for compatibility"""
+    return await get_optimizations(skip, limit, status, optimization_type, current_user)
 @router.get("/{optimization_id}", response_model=OptimizationResponse)
 async def get_optimization(
     optimization_id: int,
@@ -352,6 +419,26 @@ async def get_optimization_results(
             "constraints_satisfied": len(optimization["constraints"])
         }
     }
+
+
+@router.get("/metrics/current", response_model=Dict[str, Any])
+async def get_current_optimization_metrics(
+    current_user: dict = Depends(get_current_active_user)
+) -> Dict[str, Any]:
+    """Get current optimization metrics"""
+    
+    # Mock current metrics
+    current_metrics = {
+        "active_optimizations": 2,
+        "completed_today": 5,
+        "average_completion_time": 45.2,
+        "success_rate": 0.87,
+        "total_delay_reduction": 23.5,
+        "energy_savings": 12.3,
+        "last_updated": datetime.utcnow().isoformat()
+    }
+    
+    return current_metrics
 
 
 @router.get("/{optimization_id}/metrics", response_model=OptimizationMetrics)

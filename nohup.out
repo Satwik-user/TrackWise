@@ -1,0 +1,348 @@
+2025-09-23 12:12:54,695 - app.main - INFO - All API routes loaded successfully
+2025-09-23 12:12:54,695 - app.main - INFO - Static files mounted successfully
+INFO:     Started server process [64545]
+INFO:     Waiting for application startup.
+2025-09-23 12:12:54,711 - app.main - INFO - Starting TrackWise Railway Optimization API v1.0.0
+2025-09-23 12:12:54,711 - app.main - INFO - Environment: development
+2025-09-23 12:12:54,711 - app.database - INFO - Initializing database...
+2025-09-23 12:12:54,715 - app.database - INFO - Database tables created successfully
+2025-09-23 12:12:54,724 - app.database - INFO - Initial data created successfully
+2025-09-23 12:12:54,724 - app.main - INFO - Database initialized
+2025-09-23 12:12:54,724 - app.services.ml_service - INFO - Loading ML model: delay_prediction_v1 (version: latest)
+2025-09-23 12:12:54,825 - app.services.ml_service - INFO - Successfully loaded model: delay_prediction_v1
+2025-09-23 12:12:54,825 - app.services.ml_service - INFO - Loading ML model: demand_forecasting_v1 (version: latest)
+2025-09-23 12:12:54,926 - app.services.ml_service - INFO - Successfully loaded model: demand_forecasting_v1
+2025-09-23 12:12:54,926 - app.services.ml_service - INFO - Loading ML model: maintenance_prediction_v1 (version: latest)
+2025-09-23 12:12:55,026 - app.services.ml_service - INFO - Successfully loaded model: maintenance_prediction_v1
+2025-09-23 12:12:55,026 - app.main - INFO - ML models loaded
+2025-09-23 12:12:55,026 - app.main - INFO - WebSocket manager initialized
+2025-09-23 12:12:55,026 - app.main - INFO - Background tasks started
+2025-09-23 12:12:55,026 - app.main - INFO - Application startup complete
+2025-09-23 12:12:55,026 - ml_models.models.delay_predictor - ERROR - Error loading model: [Errno 2] No such file or directory: 'ml_models/models/delay_predictor.joblib'
+2025-09-23 12:12:55,026 - ml_models.inference.prediction_service - WARNING - Could not load delay predictor: [Errno 2] No such file or directory: 'ml_models/models/delay_predictor.joblib'
+2025-09-23 12:12:55,026 - ml_models.inference.prediction_service - INFO - Initializing with default models
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2025-09-23 12:13:03,357 - app.main - INFO - GET http://localhost:8000/api/trains - 307 - 0.001s
+2025-09-23 12:13:03,357 - app.main - INFO - GET http://localhost:8000/api/sections - 307 - 0.000s
+🚂 Starting TrackWise Backend (Simple Mode)
+==================================================
+INFO:     127.0.0.1:48720 - "GET /api/trains HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:48724 - "GET /api/sections HTTP/1.1" 307 Temporary Redirect
+2025-09-23 12:13:03,360 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:13:03,361 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:13:03,361 - app.main - INFO - GET http://localhost:8000/api/analytics/metrics/performance?time_range=last_24_hours - 403 - 0.001s
+2025-09-23 12:13:03,361 - app.main - INFO - GET http://localhost:8000/api/analytics/trends?metric_type=performance&time_range=last_24_hours - 403 - 0.002s
+INFO:     127.0.0.1:48724 - "GET /api/analytics/metrics/performance?time_range=last_24_hours HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:48720 - "GET /api/analytics/trends?metric_type=performance&time_range=last_24_hours HTTP/1.1" 403 Forbidden
+2025-09-23 12:13:03,364 - app.main - INFO - GET http://localhost:8000/api/sections - 307 - 0.000s
+INFO:     127.0.0.1:48724 - "GET /api/sections HTTP/1.1" 307 Temporary Redirect
+2025-09-23 12:13:03,365 - app.main - INFO - GET http://localhost:8000/api/trains - 307 - 0.000s
+INFO:     127.0.0.1:48720 - "GET /api/trains HTTP/1.1" 307 Temporary Redirect
+2025-09-23 12:13:03,366 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:13:03,366 - app.main - INFO - GET http://localhost:8000/api/sections/ - 403 - 0.001s
+INFO:     127.0.0.1:48724 - "GET /api/sections/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:13:03,367 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:13:03,367 - app.main - INFO - GET http://localhost:8000/api/trains/ - 403 - 0.000s
+INFO:     127.0.0.1:48720 - "GET /api/trains/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:13:03,368 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:13:03,368 - app.main - INFO - GET http://localhost:8000/api/analytics/metrics/performance?time_range=last_24_hours - 403 - 0.000s
+INFO:     127.0.0.1:48724 - "GET /api/analytics/metrics/performance?time_range=last_24_hours HTTP/1.1" 403 Forbidden
+2025-09-23 12:13:03,371 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:13:03,371 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:13:03,372 - app.main - INFO - GET http://localhost:8000/api/sections/ - 403 - 0.001s
+2025-09-23 12:13:03,372 - app.main - INFO - GET http://localhost:8000/api/analytics/metrics/performance?time_range=last_24_hours - 403 - 0.001s
+INFO:     127.0.0.1:48720 - "GET /api/sections/ HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:48724 - "GET /api/analytics/metrics/performance?time_range=last_24_hours HTTP/1.1" 403 Forbidden
+2025-09-23 12:13:03,375 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:13:03,375 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:13:03,375 - app.main - INFO - GET http://localhost:8000/api/trains/ - 403 - 0.001s
+2025-09-23 12:13:03,376 - app.main - INFO - GET http://localhost:8000/api/analytics/dashboard - 403 - 0.001s
+INFO:     127.0.0.1:48720 - "GET /api/trains/ HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:48724 - "GET /api/analytics/dashboard HTTP/1.1" 403 Forbidden
+2025-09-23 12:13:22,371 - app.main - INFO - GET http://localhost:8000/api/trains - 307 - 0.000s
+INFO:     127.0.0.1:41278 - "GET /api/trains HTTP/1.1" 307 Temporary Redirect
+2025-09-23 12:13:22,373 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:13:22,373 - app.main - INFO - GET http://localhost:8000/api/sections - 307 - 0.001s
+2025-09-23 12:13:22,373 - app.main - INFO - GET http://localhost:8000/api/analytics/trends?metric_type=performance&time_range=last_24_hours - 403 - 0.001s
+2025-09-23 12:13:22,374 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+INFO:     127.0.0.1:41294 - "GET /api/sections HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:41302 - "GET /api/analytics/trends?metric_type=performance&time_range=last_24_hours HTTP/1.1" 403 Forbidden
+2025-09-23 12:13:22,375 - app.main - INFO - GET http://localhost:8000/api/analytics/metrics/performance?time_range=last_24_hours - 403 - 0.001s
+2025-09-23 12:13:22,375 - app.main - INFO - GET http://localhost:8000/api/trains - 307 - 0.001s
+INFO:     127.0.0.1:41306 - "GET /api/analytics/metrics/performance?time_range=last_24_hours HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:41278 - "GET /api/trains HTTP/1.1" 307 Temporary Redirect
+2025-09-23 12:13:22,376 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:13:22,378 - app.main - INFO - GET http://localhost:8000/api/trains/ - 403 - 0.002s
+2025-09-23 12:13:22,378 - app.main - INFO - GET http://localhost:8000/api/sections - 307 - 0.002s
+2025-09-23 12:13:22,378 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+INFO:     127.0.0.1:41294 - "GET /api/trains/ HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:41302 - "GET /api/sections HTTP/1.1" 307 Temporary Redirect
+2025-09-23 12:13:22,379 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:13:22,379 - app.main - INFO - GET http://localhost:8000/api/analytics/metrics/performance?time_range=last_24_hours - 403 - 0.001s
+2025-09-23 12:13:22,379 - app.main - INFO - GET http://localhost:8000/api/sections/ - 403 - 0.003s
+INFO:     127.0.0.1:41306 - "GET /api/analytics/metrics/performance?time_range=last_24_hours HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:41278 - "GET /api/sections/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:13:22,382 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:13:22,382 - app.main - INFO - GET http://localhost:8000/api/analytics/metrics/performance?time_range=last_24_hours - 403 - 0.000s
+INFO:     127.0.0.1:41306 - "GET /api/analytics/metrics/performance?time_range=last_24_hours HTTP/1.1" 403 Forbidden
+2025-09-23 12:13:22,398 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:13:22,399 - app.main - INFO - GET http://localhost:8000/api/trains/ - 403 - 0.001s
+2025-09-23 12:13:22,399 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+INFO:     127.0.0.1:41306 - "GET /api/trains/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:13:22,399 - app.main - INFO - GET http://localhost:8000/api/sections/ - 403 - 0.001s
+INFO:     127.0.0.1:41278 - "GET /api/sections/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:13:22,401 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:13:22,401 - app.main - INFO - GET http://localhost:8000/api/analytics/dashboard - 403 - 0.000s
+INFO:     127.0.0.1:41294 - "GET /api/analytics/dashboard HTTP/1.1" 403 Forbidden
+2025-09-23 12:13:32,986 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "/home/satwik/TrackWise/venv/lib/python3.12/site-packages/passlib/handlers/bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-09-23 12:13:34,208 - app.main - INFO - POST http://localhost:8000/api/auth/login - 200 - 1.225s
+2025-09-23 12:13:34,209 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:13:34,210 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+INFO:     127.0.0.1:47344 - "POST /api/auth/login HTTP/1.1" 200 OK
+2025-09-23 12:13:34,211 - app.main - INFO - GET http://localhost:8000/api/trains - 307 - 0.003s
+2025-09-23 12:13:34,211 - app.main - INFO - GET http://localhost:8000/api/sections - 307 - 0.003s
+2025-09-23 12:13:34,211 - app.main - INFO - GET http://localhost:8000/api/analytics/metrics/performance?time_range=last_24_hours - 403 - 0.003s
+2025-09-23 12:13:34,211 - app.main - INFO - GET http://localhost:8000/api/analytics/trends?metric_type=performance&time_range=last_24_hours - 403 - 0.003s
+INFO:     127.0.0.1:48736 - "GET /api/trains HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:48742 - "GET /api/sections HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:48744 - "GET /api/analytics/metrics/performance?time_range=last_24_hours HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:48758 - "GET /api/analytics/trends?metric_type=performance&time_range=last_24_hours HTTP/1.1" 403 Forbidden
+2025-09-23 12:13:34,216 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:13:34,217 - app.main - INFO - GET http://localhost:8000/api/analytics/metrics/performance?time_range=last_24_hours - 403 - 0.001s
+INFO:     127.0.0.1:48736 - "GET /api/analytics/metrics/performance?time_range=last_24_hours HTTP/1.1" 403 Forbidden
+2025-09-23 12:13:34,221 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:13:34,223 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:13:34,224 - app.main - INFO - GET http://localhost:8000/api/analytics/metrics/performance?time_range=last_24_hours - 403 - 0.003s
+2025-09-23 12:13:34,224 - app.main - INFO - GET http://localhost:8000/api/trains/ - 403 - 0.005s
+INFO:     127.0.0.1:48758 - "GET /api/analytics/metrics/performance?time_range=last_24_hours HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:48744 - "GET /api/trains/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:13:34,228 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:13:34,229 - app.main - INFO - GET http://localhost:8000/api/sections/ - 403 - 0.005s
+INFO:     127.0.0.1:48736 - "GET /api/sections/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:13:34,261 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:13:34,262 - app.main - INFO - GET http://localhost:8000/api/analytics/dashboard - 403 - 0.001s
+INFO:     127.0.0.1:48736 - "GET /api/analytics/dashboard HTTP/1.1" 403 Forbidden
+WARNING:  Invalid HTTP request received.
+2025-09-23 12:14:03,039 - app.main - INFO - GET http://localhost:8000/api/trains - 307 - 0.001s
+INFO:     127.0.0.1:47348 - "GET /api/trains HTTP/1.1" 307 Temporary Redirect
+2025-09-23 12:14:03,041 - app.main - INFO - GET http://localhost:8000/api/sections - 307 - 0.000s
+INFO:     127.0.0.1:47348 - "GET /api/sections HTTP/1.1" 307 Temporary Redirect
+2025-09-23 12:14:03,043 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:03,043 - app.main - INFO - GET http://localhost:8000/api/trains/ - 403 - 0.001s
+INFO:     127.0.0.1:47348 - "GET /api/trains/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:14:03,045 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:03,045 - app.main - INFO - GET http://localhost:8000/api/sections/ - 403 - 0.000s
+INFO:     127.0.0.1:47348 - "GET /api/sections/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:14:03,053 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:03,053 - app.main - INFO - GET http://localhost:8000/api/analytics/dashboard - 403 - 0.001s
+INFO:     127.0.0.1:47348 - "GET /api/analytics/dashboard HTTP/1.1" 403 Forbidden
+2025-09-23 12:14:03,238 - app.main - INFO - GET http://localhost:8000/api/trains - 307 - 0.000s
+INFO:     127.0.0.1:47348 - "GET /api/trains HTTP/1.1" 307 Temporary Redirect
+2025-09-23 12:14:03,242 - app.main - INFO - GET http://localhost:8000/api/sections - 307 - 0.000s
+INFO:     127.0.0.1:47348 - "GET /api/sections HTTP/1.1" 307 Temporary Redirect
+2025-09-23 12:14:03,244 - app.main - INFO - GET http://localhost:8000/api/trains - 307 - 0.000s
+INFO:     127.0.0.1:47348 - "GET /api/trains HTTP/1.1" 307 Temporary Redirect
+2025-09-23 12:14:03,246 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:03,246 - app.main - INFO - GET http://localhost:8000/api/analytics/metrics/performance?time_range=last_24_hours - 403 - 0.000s
+INFO:     127.0.0.1:47348 - "GET /api/analytics/metrics/performance?time_range=last_24_hours HTTP/1.1" 403 Forbidden
+2025-09-23 12:14:03,248 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:03,249 - app.main - INFO - GET http://localhost:8000/api/analytics/trends?metric_type=performance&time_range=last_24_hours - 403 - 0.000s
+INFO:     127.0.0.1:47348 - "GET /api/analytics/trends?metric_type=performance&time_range=last_24_hours HTTP/1.1" 403 Forbidden
+2025-09-23 12:14:03,251 - app.main - INFO - GET http://localhost:8000/api/sections - 307 - 0.000s
+INFO:     127.0.0.1:47348 - "GET /api/sections HTTP/1.1" 307 Temporary Redirect
+2025-09-23 12:14:03,253 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:03,253 - app.main - INFO - GET http://localhost:8000/api/trains/ - 403 - 0.001s
+INFO:     127.0.0.1:47348 - "GET /api/trains/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:14:03,256 - app.main - INFO - GET http://localhost:8000/api/trains - 307 - 0.000s
+INFO:     127.0.0.1:47348 - "GET /api/trains HTTP/1.1" 307 Temporary Redirect
+2025-09-23 12:14:03,258 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:03,258 - app.main - INFO - GET http://localhost:8000/api/sections/ - 403 - 0.001s
+INFO:     127.0.0.1:47348 - "GET /api/sections/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:14:03,260 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:03,260 - app.main - INFO - GET http://localhost:8000/api/analytics/metrics/performance?time_range=last_24_hours - 403 - 0.000s
+INFO:     127.0.0.1:47348 - "GET /api/analytics/metrics/performance?time_range=last_24_hours HTTP/1.1" 403 Forbidden
+2025-09-23 12:14:03,262 - app.main - INFO - GET http://localhost:8000/api/sections - 307 - 0.000s
+INFO:     127.0.0.1:47348 - "GET /api/sections HTTP/1.1" 307 Temporary Redirect
+2025-09-23 12:14:03,264 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:03,264 - app.main - INFO - GET http://localhost:8000/api/trains/ - 403 - 0.001s
+INFO:     127.0.0.1:47348 - "GET /api/trains/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:14:03,267 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:03,267 - app.main - INFO - GET http://localhost:8000/api/sections/ - 403 - 0.001s
+INFO:     127.0.0.1:47348 - "GET /api/sections/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:14:03,269 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:03,270 - app.main - INFO - GET http://localhost:8000/api/analytics/metrics/performance?time_range=last_24_hours - 403 - 0.000s
+INFO:     127.0.0.1:47348 - "GET /api/analytics/metrics/performance?time_range=last_24_hours HTTP/1.1" 403 Forbidden
+2025-09-23 12:14:03,272 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:03,272 - app.main - INFO - GET http://localhost:8000/api/trains/ - 403 - 0.001s
+INFO:     127.0.0.1:47348 - "GET /api/trains/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:14:03,274 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:03,275 - app.main - INFO - GET http://localhost:8000/api/sections/ - 403 - 0.001s
+INFO:     127.0.0.1:47348 - "GET /api/sections/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:14:04,154 - app.main - INFO - GET http://localhost:8000/docs - 200 - 0.000s
+INFO:     127.0.0.1:45598 - "GET /docs HTTP/1.1" 200 OK
+2025-09-23 12:14:23,372 - app.main - INFO - GET http://localhost:8000/api/trains - 307 - 0.001s
+2025-09-23 12:14:23,372 - app.main - INFO - GET http://localhost:8000/api/sections - 307 - 0.001s
+2025-09-23 12:14:23,373 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+INFO:     127.0.0.1:36192 - "GET /api/trains HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:36198 - "GET /api/sections HTTP/1.1" 307 Temporary Redirect
+2025-09-23 12:14:23,373 - app.main - INFO - GET http://localhost:8000/api/analytics/trends?metric_type=performance&time_range=last_24_hours - 403 - 0.001s
+INFO:     127.0.0.1:36204 - "GET /api/analytics/trends?metric_type=performance&time_range=last_24_hours HTTP/1.1" 403 Forbidden
+2025-09-23 12:14:23,374 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:23,374 - app.main - INFO - GET http://localhost:8000/api/analytics/metrics/performance?time_range=last_24_hours - 403 - 0.001s
+INFO:     127.0.0.1:36210 - "GET /api/analytics/metrics/performance?time_range=last_24_hours HTTP/1.1" 403 Forbidden
+2025-09-23 12:14:23,375 - app.main - INFO - GET http://localhost:8000/api/sections - 307 - 0.000s
+2025-09-23 12:14:23,376 - app.main - INFO - GET http://localhost:8000/api/trains - 307 - 0.000s
+INFO:     127.0.0.1:36192 - "GET /api/sections HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:36198 - "GET /api/trains HTTP/1.1" 307 Temporary Redirect
+2025-09-23 12:14:23,377 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:23,377 - app.main - INFO - GET http://localhost:8000/api/trains/ - 403 - 0.001s
+2025-09-23 12:14:23,378 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:23,378 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+INFO:     127.0.0.1:36204 - "GET /api/trains/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:14:23,378 - app.main - INFO - GET http://localhost:8000/api/analytics/metrics/performance?time_range=last_24_hours - 403 - 0.001s
+2025-09-23 12:14:23,378 - app.main - INFO - GET http://localhost:8000/api/sections/ - 403 - 0.002s
+2025-09-23 12:14:23,378 - app.main - INFO - GET http://localhost:8000/api/trains - 307 - 0.001s
+INFO:     127.0.0.1:36198 - "GET /api/analytics/metrics/performance?time_range=last_24_hours HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:36210 - "GET /api/sections/ HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:36192 - "GET /api/trains HTTP/1.1" 307 Temporary Redirect
+2025-09-23 12:14:23,379 - app.main - INFO - GET http://localhost:8000/api/sections - 307 - 0.000s
+INFO:     127.0.0.1:36204 - "GET /api/sections HTTP/1.1" 307 Temporary Redirect
+2025-09-23 12:14:23,381 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:23,381 - app.main - INFO - GET http://localhost:8000/api/analytics/metrics/performance?time_range=last_24_hours - 403 - 0.001s
+2025-09-23 12:14:23,381 - app.main - INFO - GET http://localhost:8000/api/trains - 307 - 0.000s
+INFO:     127.0.0.1:36198 - "GET /api/analytics/metrics/performance?time_range=last_24_hours HTTP/1.1" 403 Forbidden
+2025-09-23 12:14:23,381 - app.main - INFO - GET http://localhost:8000/api/sections - 307 - 0.000s
+INFO:     127.0.0.1:36210 - "GET /api/trains HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:36204 - "GET /api/sections HTTP/1.1" 307 Temporary Redirect
+2025-09-23 12:14:23,396 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:23,396 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:23,396 - app.main - INFO - GET http://localhost:8000/api/trains/ - 403 - 0.001s
+2025-09-23 12:14:23,396 - app.main - INFO - GET http://localhost:8000/api/sections/ - 403 - 0.001s
+INFO:     127.0.0.1:36204 - "GET /api/trains/ HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:36198 - "GET /api/sections/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:14:23,398 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:23,398 - app.main - INFO - GET http://localhost:8000/api/analytics/dashboard - 403 - 0.001s
+INFO:     127.0.0.1:36210 - "GET /api/analytics/dashboard HTTP/1.1" 403 Forbidden
+2025-09-23 12:14:23,399 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:23,399 - app.main - INFO - GET http://localhost:8000/api/trains/ - 403 - 0.001s
+INFO:     127.0.0.1:36204 - "GET /api/trains/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:14:23,400 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:23,400 - app.main - INFO - GET http://localhost:8000/api/sections/ - 403 - 0.001s
+INFO:     127.0.0.1:36198 - "GET /api/sections/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:14:23,403 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:23,403 - app.main - INFO - GET http://localhost:8000/api/trains/ - 403 - 0.001s
+2025-09-23 12:14:23,403 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+INFO:     127.0.0.1:36204 - "GET /api/trains/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:14:23,404 - app.main - INFO - GET http://localhost:8000/api/sections/ - 403 - 0.001s
+INFO:     127.0.0.1:36198 - "GET /api/sections/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:14:33,041 - app.main - INFO - GET http://localhost:8000/api/sections - 307 - 0.001s
+2025-09-23 12:14:33,042 - app.main - INFO - GET http://localhost:8000/api/trains - 307 - 0.001s
+INFO:     127.0.0.1:45552 - "GET /api/sections HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:45562 - "GET /api/trains HTTP/1.1" 307 Temporary Redirect
+2025-09-23 12:14:33,046 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:33,046 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:33,046 - app.main - INFO - GET http://localhost:8000/api/sections/ - 403 - 0.001s
+2025-09-23 12:14:33,046 - app.main - INFO - GET http://localhost:8000/api/trains/ - 403 - 0.001s
+INFO:     127.0.0.1:45562 - "GET /api/sections/ HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:45552 - "GET /api/trains/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:14:33,052 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:33,053 - app.main - INFO - GET http://localhost:8000/api/analytics/dashboard - 403 - 0.001s
+INFO:     127.0.0.1:45552 - "GET /api/analytics/dashboard HTTP/1.1" 403 Forbidden
+2025-09-23 12:14:33,238 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:33,239 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:33,239 - app.main - INFO - GET http://localhost:8000/api/analytics/metrics/performance?time_range=last_24_hours - 403 - 0.001s
+2025-09-23 12:14:33,239 - app.main - INFO - GET http://localhost:8000/api/analytics/trends?metric_type=performance&time_range=last_24_hours - 403 - 0.001s
+INFO:     127.0.0.1:45552 - "GET /api/analytics/metrics/performance?time_range=last_24_hours HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:45562 - "GET /api/analytics/trends?metric_type=performance&time_range=last_24_hours HTTP/1.1" 403 Forbidden
+2025-09-23 12:14:33,242 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:33,242 - app.main - INFO - GET http://localhost:8000/api/analytics/metrics/performance?time_range=last_24_hours - 403 - 0.001s
+INFO:     127.0.0.1:45576 - "GET /api/analytics/metrics/performance?time_range=last_24_hours HTTP/1.1" 403 Forbidden
+2025-09-23 12:14:33,244 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:14:33,244 - app.main - INFO - GET http://localhost:8000/api/analytics/metrics/performance?time_range=last_24_hours - 403 - 0.000s
+INFO:     127.0.0.1:45562 - "GET /api/analytics/metrics/performance?time_range=last_24_hours HTTP/1.1" 403 Forbidden
+2025-09-23 12:15:03,039 - app.main - INFO - GET http://localhost:8000/api/sections - 307 - 0.001s
+2025-09-23 12:15:03,039 - app.main - INFO - GET http://localhost:8000/api/trains - 307 - 0.001s
+INFO:     127.0.0.1:45590 - "GET /api/sections HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:45578 - "GET /api/trains HTTP/1.1" 307 Temporary Redirect
+2025-09-23 12:15:03,042 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:15:03,042 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:15:03,042 - app.main - INFO - GET http://localhost:8000/api/sections/ - 403 - 0.001s
+2025-09-23 12:15:03,042 - app.main - INFO - GET http://localhost:8000/api/trains/ - 403 - 0.001s
+INFO:     127.0.0.1:45578 - "GET /api/sections/ HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:45590 - "GET /api/trains/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:15:03,050 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:15:03,050 - app.main - INFO - GET http://localhost:8000/api/analytics/dashboard - 403 - 0.001s
+INFO:     127.0.0.1:45590 - "GET /api/analytics/dashboard HTTP/1.1" 403 Forbidden
+2025-09-23 12:15:03,237 - app.main - INFO - GET http://localhost:8000/api/trains - 307 - 0.000s
+INFO:     127.0.0.1:45590 - "GET /api/trains HTTP/1.1" 307 Temporary Redirect
+2025-09-23 12:15:03,238 - app.main - INFO - GET http://localhost:8000/api/sections - 307 - 0.000s
+INFO:     127.0.0.1:45578 - "GET /api/sections HTTP/1.1" 307 Temporary Redirect
+2025-09-23 12:15:03,240 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:15:03,240 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:15:03,240 - app.main - INFO - GET http://localhost:8000/api/analytics/trends?metric_type=performance&time_range=last_24_hours - 403 - 0.001s
+2025-09-23 12:15:03,241 - app.main - INFO - GET http://localhost:8000/api/analytics/metrics/performance?time_range=last_24_hours - 403 - 0.001s
+INFO:     127.0.0.1:45578 - "GET /api/analytics/trends?metric_type=performance&time_range=last_24_hours HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:45590 - "GET /api/analytics/metrics/performance?time_range=last_24_hours HTTP/1.1" 403 Forbidden
+2025-09-23 12:15:03,244 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:15:03,244 - app.main - INFO - GET http://localhost:8000/api/analytics/metrics/performance?time_range=last_24_hours - 403 - 0.000s
+INFO:     127.0.0.1:45578 - "GET /api/analytics/metrics/performance?time_range=last_24_hours HTTP/1.1" 403 Forbidden
+2025-09-23 12:15:03,245 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:15:03,246 - app.main - INFO - GET http://localhost:8000/api/analytics/metrics/performance?time_range=last_24_hours - 403 - 0.000s
+INFO:     127.0.0.1:45590 - "GET /api/analytics/metrics/performance?time_range=last_24_hours HTTP/1.1" 403 Forbidden
+2025-09-23 12:15:03,248 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:15:03,248 - app.main - INFO - GET http://localhost:8000/api/trains/ - 403 - 0.001s
+INFO:     127.0.0.1:45578 - "GET /api/trains/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:15:03,249 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:15:03,250 - app.main - INFO - GET http://localhost:8000/api/sections/ - 403 - 0.001s
+INFO:     127.0.0.1:45590 - "GET /api/sections/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:15:24,386 - app.main - INFO - GET http://localhost:8000/api/trains - 307 - 0.000s
+INFO:     127.0.0.1:36962 - "GET /api/trains HTTP/1.1" 307 Temporary Redirect
+2025-09-23 12:15:24,389 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:15:24,389 - app.main - INFO - GET http://localhost:8000/api/sections - 307 - 0.001s
+2025-09-23 12:15:24,389 - app.main - INFO - GET http://localhost:8000/api/analytics/metrics/performance?time_range=last_24_hours - 403 - 0.001s
+INFO:     127.0.0.1:36966 - "GET /api/sections HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:36970 - "GET /api/analytics/metrics/performance?time_range=last_24_hours HTTP/1.1" 403 Forbidden
+2025-09-23 12:15:24,390 - app.main - INFO - GET http://localhost:8000/api/trains - 307 - 0.001s
+INFO:     127.0.0.1:36962 - "GET /api/trains HTTP/1.1" 307 Temporary Redirect
+2025-09-23 12:15:24,391 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:15:24,391 - app.main - INFO - GET http://localhost:8000/api/analytics/trends?metric_type=performance&time_range=last_24_hours - 403 - 0.000s
+INFO:     127.0.0.1:36976 - "GET /api/analytics/trends?metric_type=performance&time_range=last_24_hours HTTP/1.1" 403 Forbidden
+2025-09-23 12:15:24,391 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:15:24,392 - app.main - INFO - GET http://localhost:8000/api/analytics/metrics/performance?time_range=last_24_hours - 403 - 0.001s
+INFO:     127.0.0.1:36970 - "GET /api/analytics/metrics/performance?time_range=last_24_hours HTTP/1.1" 403 Forbidden
+2025-09-23 12:15:24,393 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:15:24,393 - app.main - INFO - GET http://localhost:8000/api/sections - 307 - 0.002s
+2025-09-23 12:15:24,394 - app.main - INFO - GET http://localhost:8000/api/trains/ - 403 - 0.002s
+INFO:     127.0.0.1:36962 - "GET /api/sections HTTP/1.1" 307 Temporary Redirect
+2025-09-23 12:15:24,394 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+INFO:     127.0.0.1:36966 - "GET /api/trains/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:15:24,395 - app.main - INFO - GET http://localhost:8000/api/sections/ - 403 - 0.002s
+INFO:     127.0.0.1:36976 - "GET /api/sections/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:15:24,395 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:15:24,395 - app.main - INFO - GET http://localhost:8000/api/analytics/metrics/performance?time_range=last_24_hours - 403 - 0.000s
+INFO:     127.0.0.1:36970 - "GET /api/analytics/metrics/performance?time_range=last_24_hours HTTP/1.1" 403 Forbidden
+2025-09-23 12:15:24,410 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:15:24,411 - app.main - INFO - GET http://localhost:8000/api/trains/ - 403 - 0.001s
+2025-09-23 12:15:24,411 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+INFO:     127.0.0.1:36970 - "GET /api/trains/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:15:24,411 - app.main - INFO - GET http://localhost:8000/api/sections/ - 403 - 0.001s
+INFO:     127.0.0.1:36976 - "GET /api/sections/ HTTP/1.1" 403 Forbidden
+2025-09-23 12:15:24,412 - app.main - WARNING - HTTP exception: 403 - Not authenticated
+2025-09-23 12:15:24,413 - app.main - INFO - GET http://localhost:8000/api/analytics/dashboard - 403 - 0.000s
+INFO:     127.0.0.1:36966 - "GET /api/analytics/dashboard HTTP/1.1" 403 Forbidden
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2025-09-23 12:15:26,964 - app.main - INFO - Starting application shutdown...
+2025-09-23 12:15:26,965 - app.core.websocket - INFO - Shutting down WebSocket manager...
+2025-09-23 12:15:26,965 - app.core.websocket - INFO - WebSocket manager shutdown complete
+2025-09-23 12:15:26,965 - app.database - INFO - Closing database connections...
+2025-09-23 12:15:26,966 - app.database - INFO - Database connections closed
+2025-09-23 12:15:26,966 - app.main - INFO - Application shutdown complete
+INFO:     Application shutdown complete.
+INFO:     Finished server process [64545]

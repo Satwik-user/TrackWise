@@ -7,8 +7,13 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from pydantic import BaseModel, Field
 from datetime import datetime, timedelta
 from enum import Enum
+from sqlalchemy.orm import Session
+from sqlalchemy import func, and_
 
 from app.core.security import get_current_active_user
+from app.core.database import get_db
+from app.models.train import Train
+from app.models.section import Section
 
 router = APIRouter()
 
@@ -42,6 +47,110 @@ class DashboardData(BaseModel):
     environmental_metrics: Dict[str, Any]
     recent_alerts: List[Dict[str, Any]]
     system_health: Dict[str, Any]
+
+
+async def calculate_train_analytics(db: Session) -> Dict[str, Any]:
+    """Calculate real train analytics from database"""
+    total_trains = db.query(Train).count()
+    active_trains = db.query(Train).filter(Train.status.in_(["RUNNING", "MOVING", "ACTIVE"])).count()
+    
+    # Calculate average speed for active trains
+    avg_speed_result = db.query(func.avg(Train.current_speed)).filter(
+        Train.status.in_(["RUNNING", "MOVING", "ACTIVE"])
+    ).scalar()
+    average_speed = float(avg_speed_result) if avg_speed_result else 0.0
+    
+    # Calculate average delay
+    avg_delay_result = db.query(func.avg(Train.delay_minutes)).scalar()
+    average_delay_minutes = float(avg_delay_result) if avg_delay_result else 0.0
+    
+    # Calculate on-time percentage (trains with delay < 5 minutes)
+    on_time_trains = db.query(Train).filter(Train.delay_minutes < 5.0).count()
+    on_time_percentage = (on_time_trains / total_trains * 100) if total_trains > 0 else 100.0
+    
+    # Count delay incidents (trains with delay > 0)
+    delay_incidents = db.query(Train).filter(Train.delay_minutes > 0).count()
+    
+    return {
+        "total_trains": total_trains,
+        "active_trains": active_trains,
+        "average_speed": round(average_speed, 1),
+        "total_distance_today": round(average_speed * 8, 1) if average_speed > 0 else 0,  # Estimate based on 8 hours
+        "on_time_percentage": round(on_time_percentage, 1),
+        "delay_incidents": delay_incidents,
+        "average_delay_minutes": round(average_delay_minutes, 1),
+        "fuel_consumption_liters": round(total_trains * 150.5, 1),  # Estimated
+        "energy_efficiency_score": 0.85 if on_time_percentage > 80 else 0.65
+    }
+
+
+async def calculate_section_analytics(db: Session) -> Dict[str, Any]:
+    """Calculate real section analytics from database"""
+    total_sections = db.query(Section).count()
+    available_sections = db.query(Section).filter(Section.status == "AVAILABLE").count()
+    maintenance_sections = db.query(Section).filter(Section.status == "MAINTENANCE").count()
+    
+    # Calculate section utilization
+    trains_per_section = db.query(Train.current_section, func.count(Train.id)).group_by(Train.current_section).all()
+    if trains_per_section:
+        avg_utilization = sum(count for _, count in trains_per_section) / total_sections * 100
+    else:
+        avg_utilization = 0.0
+    
+    # Find bottleneck sections (sections with most trains)
+    bottleneck_sections = []
+    if trains_per_section:
+        max_trains = max(count for _, count in trains_per_section)
+        bottleneck_sections = [f"SEC-{section_id:03d}" for section_id, count in trains_per_section if count == max_trains]
+    
+    # Find highest traffic section
+    highest_traffic_section = None
+    if trains_per_section:
+        highest_traffic_id = max(trains_per_section, key=lambda x: x[1])[0]
+        highest_traffic_section = f"SEC-{highest_traffic_id:03d}"
+    
+    return {
+        "total_sections": total_sections,
+        "available_sections": available_sections,
+        "maintenance_sections": maintenance_sections,
+        "average_utilization": round(avg_utilization, 1),
+        "bottleneck_sections": bottleneck_sections,
+        "highest_traffic_section": highest_traffic_section,
+        "signal_changes_today": 45,  # Could be tracked separately
+        "maintenance_hours_today": maintenance_sections * 2.5  # Estimated
+    }
+
+
+async def calculate_performance_metrics(db: Session) -> Dict[str, Any]:
+    """Calculate real performance metrics"""
+    total_trains = db.query(Train).count()
+    active_trains = db.query(Train).filter(Train.status.in_(["RUNNING", "MOVING", "ACTIVE"])).count()
+    
+    # Schedule adherence (based on delays)
+    on_time_trains = db.query(Train).filter(Train.delay_minutes < 5.0).count()
+    schedule_adherence = (on_time_trains / total_trains) if total_trains > 0 else 1.0
+    
+    # Average delay
+    avg_delay_result = db.query(func.avg(Train.delay_minutes)).scalar()
+    average_delay_minutes = float(avg_delay_result) if avg_delay_result else 0.0
+    
+    # Capacity utilization
+    total_sections = db.query(Section).count()
+    capacity_utilization = (active_trains / total_sections) if total_sections > 0 else 0.0
+    
+    # Overall efficiency
+    overall_efficiency = (schedule_adherence + capacity_utilization) / 2
+    
+    return {
+        "overall_efficiency": round(overall_efficiency, 2),
+        "schedule_adherence": round(schedule_adherence, 2),
+        "capacity_utilization": round(capacity_utilization, 2),
+        "average_delay_minutes": round(average_delay_minutes, 1),
+        "throughput_trains_per_hour": round(active_trains * 0.8, 1),  # Estimated
+        "system_availability": 0.98,  # Could be calculated from uptime
+        "mean_time_between_failures": 168.5,  # Would need failure tracking
+        "response_time_minutes": 3.2  # System response time
+    }
 
 
 class PerformanceReport(BaseModel):
@@ -159,17 +268,23 @@ MOCK_ALERTS = [
 
 @router.get("/dashboard", response_model=DashboardData)
 async def get_dashboard_data(
+    db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_active_user)
 ) -> DashboardData:
     """Get comprehensive dashboard analytics data"""
     
+    # Calculate real analytics from database
+    train_analytics = await calculate_train_analytics(db)
+    section_analytics = await calculate_section_analytics(db)
+    performance_metrics = await calculate_performance_metrics(db)
+    
     return DashboardData(
-        train_analytics=MOCK_ANALYTICS_DATA["train_analytics"],
-        section_analytics=MOCK_ANALYTICS_DATA["section_analytics"],
-        performance_metrics=MOCK_ANALYTICS_DATA["performance_metrics"],
-        efficiency_metrics=MOCK_ANALYTICS_DATA["efficiency_metrics"],
-        safety_metrics=MOCK_ANALYTICS_DATA["safety_metrics"],
-        environmental_metrics=MOCK_ANALYTICS_DATA["environmental_metrics"],
+        train_analytics=train_analytics,
+        section_analytics=section_analytics,
+        performance_metrics=performance_metrics,
+        efficiency_metrics=MOCK_ANALYTICS_DATA["efficiency_metrics"],  # Keep mock for now
+        safety_metrics=MOCK_ANALYTICS_DATA["safety_metrics"],  # Keep mock for now
+        environmental_metrics=MOCK_ANALYTICS_DATA["environmental_metrics"],  # Keep mock for now
         recent_alerts=[
             {
                 "id": alert["id"],

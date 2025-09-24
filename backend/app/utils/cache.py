@@ -99,3 +99,30 @@ async def cache_delete(key: str) -> bool:
     except Exception as e:
         logger.error(f"Cache delete error: {e}")
         return False
+
+
+def cache_key(*args) -> str:
+    """Generate cache key from arguments"""
+    return ":".join(str(arg) for arg in args)
+
+
+async def get_cached(key: str) -> Optional[Any]:
+    """Get value from cache (alias for cache_get)"""
+    return await cache_get(key)
+
+
+async def set_cache(key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    """Set value in cache (alias for cache_set)"""
+    return await cache_set(key, value, ttl)
+
+
+async def delete_cache_pattern(pattern: str) -> bool:
+    """Delete cache keys matching pattern"""
+    try:
+        client = await get_redis_client()
+        # In a real Redis implementation, you'd use SCAN with pattern
+        # For mock implementation, just delete exact key
+        return await cache_delete(pattern)
+    except Exception as e:
+        logger.error(f"Cache pattern delete error: {e}")
+        return False

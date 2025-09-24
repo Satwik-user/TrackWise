@@ -42,7 +42,7 @@ const ThroughputTrendsPanel = ({ timeRange = '7d' }) => {
   };
 
   if (loading) return <LoadingSpinner />;
-  if (error) return <div className="text-red-600">Error: {error}</div>;
+  if (error) return <div className="text-red-600">Error: {typeof error === 'string' ? error : JSON.stringify(error)}</div>;
 
   const chartTabs = [
     { id: 'trends', name: 'Throughput Trends', icon: ArrowTrendingUpIcon },

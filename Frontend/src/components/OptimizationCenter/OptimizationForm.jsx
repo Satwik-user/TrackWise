@@ -12,6 +12,7 @@ import {
   PlayIcon,
   Cog6ToothIcon
 } from '@heroicons/react/24/outline';
+import SafeRenderer from '../Common/SafeRenderer';
 
 const OptimizationForm = ({
   onSubmit,
@@ -254,7 +255,7 @@ const OptimizationForm = ({
                 className={`input-field ${errors.scenario_name ? 'border-red-500' : ''}`}
               />
               {errors.scenario_name && (
-                <p className="mt-1 text-sm text-red-600">{errors.scenario_name}</p>
+                <p className="mt-1 text-sm text-red-600">{typeof errors.scenario_name === 'string' ? errors.scenario_name : JSON.stringify(errors.scenario_name)}</p>
               )}
             </div>
 
@@ -313,7 +314,7 @@ const OptimizationForm = ({
                 <span>4 hours</span>
               </div>
               {errors.time_horizon && (
-                <p className="mt-1 text-sm text-red-600">{errors.time_horizon}</p>
+                <p className="mt-1 text-sm text-red-600">{typeof errors.time_horizon === 'string' ? errors.time_horizon : JSON.stringify(errors.time_horizon)}</p>
               )}
             </div>
           </div>
@@ -327,7 +328,7 @@ const OptimizationForm = ({
             selectedTrains={selectedTrains}
             onTrainSelection={handleTrainSelection}
             onSelectAll={selectAllTrains}
-            error={errors.trains}
+            error={typeof errors.trains === 'string' ? errors.trains : JSON.stringify(errors.trains)}
           />
 
           {/* Section Selection */}
@@ -336,7 +337,7 @@ const OptimizationForm = ({
             selectedSections={selectedSections}
             onSectionSelection={handleSectionSelection}
             onSelectAll={selectAllSections}
-            error={errors.sections}
+            error={typeof errors.sections === 'string' ? errors.sections : JSON.stringify(errors.sections)}
           />
         </div>
 
@@ -344,7 +345,7 @@ const OptimizationForm = ({
         <ObjectiveWeightsPanel
           weights={formData.objective_weights}
           onChange={(weights) => handleInputChange('objective_weights', weights)}
-          error={errors.objective_weights}
+          error={typeof errors.objective_weights === 'string' ? errors.objective_weights : JSON.stringify(errors.objective_weights)}
         />
 
         {/* Advanced Settings */}
@@ -544,7 +545,7 @@ const TrainSelectionPanel = ({
         {error && (
           <p className="text-sm text-red-600 flex items-center">
             <ExclamationTriangleIcon className="h-4 w-4 mr-1" />
-            {error}
+            {typeof error === 'string' ? error : JSON.stringify(error)}
           </p>
         )}
       </div>
@@ -705,7 +706,7 @@ const SectionSelectionPanel = ({
         {error && (
           <p className="text-sm text-red-600 flex items-center">
             <ExclamationTriangleIcon className="h-4 w-4 mr-1" />
-            {error}
+            {typeof error === 'string' ? error : JSON.stringify(error)}
           </p>
         )}
       </div>
@@ -862,7 +863,7 @@ const ObjectiveWeightsPanel = ({ weights, onChange, error }) => {
         {error && (
           <p className="text-sm text-red-600 flex items-center">
             <ExclamationTriangleIcon className="h-4 w-4 mr-1" />
-            {error}
+            {typeof error === 'string' ? error : JSON.stringify(error)}
           </p>
         )}
       </div>

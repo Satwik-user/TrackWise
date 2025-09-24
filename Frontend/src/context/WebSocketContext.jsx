@@ -16,9 +16,10 @@ export const WebSocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
+  const [hasEverConnected, setHasEverConnected] = useState(false);
   const reconnectTimeoutRef = useRef(null);
   const heartbeatIntervalRef = useRef(null);
-  const maxReconnectAttempts = 5;
+  const maxReconnectAttempts = 3;
   const reconnectDelay = 3000; // 3 seconds
 
   const {
@@ -36,23 +37,24 @@ export const WebSocketProvider = ({ children }) => {
 
   const connect = () => {
     try {
-      const wsUrl = process.env.REACT_APP_WS_URL || `ws://localhost:8000/ws/${clientId.current}`;
+      const wsUrl = process.env.REACT_APP_WS_URL || `ws://localhost:8000/api/ws/connect`;
       const newSocket = new WebSocket(wsUrl);
 
-      newSocket.onopen = () => {
+      newSocket.onopen = (event) => {
         console.log('WebSocket connected');
+        setSocket(newSocket);
         setIsConnected(true);
+        setHasEverConnected(true);
+        setReconnectAttempts(0);
         setWsConnected(true);
         setWsReconnecting(false);
-        setReconnectAttempts(0);
         
-        // Start heartbeat
+        // Subscribe to topics if preferences exist
+        if (preferences && preferences.notifications) {
+          subscribeToTopics(newSocket, Object.keys(preferences.notifications));
+        }
+        
         startHeartbeat(newSocket);
-        
-        // Subscribe to default topics
-        subscribeToTopics(newSocket, ['train_positions', 'optimization_results', 'alerts']);
-        
-        toast.success('Real-time connection established');
       };
 
       newSocket.onmessage = (event) => {
@@ -65,25 +67,26 @@ export const WebSocketProvider = ({ children }) => {
       };
 
       newSocket.onclose = (event) => {
-        console.log('WebSocket disconnected:', event.reason);
+        console.log('WebSocket disconnected:', event.code, event.reason);
+        setSocket(null);
         setIsConnected(false);
         setWsConnected(false);
         stopHeartbeat();
         
-        if (!event.wasClean && reconnectAttempts < maxReconnectAttempts) {
+        // Only attempt reconnection if it wasn't a normal close
+        if (event.code !== 1000 && reconnectAttempts < maxReconnectAttempts) {
           scheduleReconnect();
         }
       };
 
       newSocket.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        toast.error('Connection error occurred');
+        // Silent error handling - WebSocket is optional
+        console.log('WebSocket connection failed (silent mode)');
       };
 
-      setSocket(newSocket);
     } catch (error) {
-      console.error('Failed to create WebSocket connection:', error);
-      scheduleReconnect();
+      // Silent error handling - WebSocket is optional 
+      console.log('Failed to create WebSocket connection (silent mode)');
     }
   };
 
@@ -97,10 +100,10 @@ export const WebSocketProvider = ({ children }) => {
   };
 
   const scheduleReconnect = () => {
-    if (reconnectAttempts >= maxReconnectAttempts) {
-      console.log('Max reconnection attempts reached');
+    // Only reconnect if we had a successful connection before
+    if (reconnectAttempts >= maxReconnectAttempts || !hasEverConnected) {
+      console.log('Skipping reconnection - either max attempts reached or never connected');
       setWsReconnecting(false);
-      toast.error('Failed to reconnect to server');
       return;
     }
 

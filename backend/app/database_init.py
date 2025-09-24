@@ -10,13 +10,9 @@ from sqlalchemy import text
 
 from app.config import settings
 from app.models.base import Base
-from app.models.user import User, Role, Permission
+from app.models.user import User
 from app.models.train import Train
 from app.models.section import Section
-from app.models.schedule import Schedule
-from app.models.optimization import OptimizationRun
-from app.models.notification import Notification
-from app.models.audit import AuditLog
 
 logger = logging.getLogger(__name__)
 

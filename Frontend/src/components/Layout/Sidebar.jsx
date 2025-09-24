@@ -9,7 +9,11 @@ import {
   EyeIcon,
   CogIcon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  BeakerIcon,
+  LightBulbIcon,
+  BoltIcon,
+  CommandLineIcon
 } from '@heroicons/react/24/outline';
 
 const Sidebar = () => {
@@ -24,6 +28,15 @@ const Sidebar = () => {
     { id: 'analytics', name: 'Analytics', icon: ChartBarIcon, path: '/analytics' },
     { id: 'optimization', name: 'Optimization Center', icon: CpuChipIcon, path: '/optimization' },
     { id: 'realtime', name: 'Real-time View', icon: EyeIcon, path: '/realtime' },
+    
+    // Advanced Control Section
+    { id: 'divider1', name: 'divider', path: null },
+    { id: 'simulation-control', name: 'Simulation Control', icon: BeakerIcon, path: '/simulation-control' },
+    { id: 'decision-support', name: 'Decision Support', icon: LightBulbIcon, path: '/decision-support' },
+    { id: 'ml-predictions', name: 'ML Predictions', icon: CpuChipIcon, path: '/ml-predictions' },
+    { id: 'train-control', name: 'Train Control', icon: CommandLineIcon, path: '/train-control' },
+    
+    { id: 'divider2', name: 'divider', path: null },
     { id: 'settings', name: 'Settings', icon: CogIcon, path: '/settings' }
   ];
 
@@ -58,6 +71,13 @@ const Sidebar = () => {
       {/* Navigation */}
       <nav className="flex-1 px-4 py-6 space-y-2">
         {navigationItems.map((item) => {
+          // Handle dividers
+          if (item.name === 'divider') {
+            return (
+              <div key={item.id} className="border-t border-gray-700 my-4"></div>
+            );
+          }
+
           const Icon = item.icon;
           return (
             <button

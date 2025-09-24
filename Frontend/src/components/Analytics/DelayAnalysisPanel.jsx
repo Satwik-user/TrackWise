@@ -36,7 +36,7 @@ const DelayAnalysisPanel = ({ timeRange = '7d', trainType = 'all', sectionId = '
   };
 
   if (loading) return <LoadingSpinner />;
-  if (error) return <div className="text-red-600">Error: {error}</div>;
+  if (error) return <div className="text-red-600">Error: {typeof error === 'string' ? error : JSON.stringify(error)}</div>;
   if (!data) return <div>No data available</div>;
 
   const totalDelays = data.delay_summary?.total_delays || 0;

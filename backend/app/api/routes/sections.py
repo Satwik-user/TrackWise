@@ -6,8 +6,12 @@ from typing import Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from pydantic import BaseModel, Field
 from datetime import datetime
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_current_active_user
+from app.models.section import Section
+from app.database import AsyncSessionLocal
 
 router = APIRouter()
 
@@ -144,22 +148,47 @@ async def get_sections(
 ) -> List[SectionResponse]:
     """Get all sections with optional filtering"""
     
-    sections = MOCK_SECTIONS.copy()
-    
-    # Apply filters
-    if section_type:
-        sections = [s for s in sections if s["section_type"].lower() == section_type.lower()]
-    
-    if status:
-        sections = [s for s in sections if s["status"].lower() == status.lower()]
-    
-    if railway_line:
-        sections = [s for s in sections if railway_line.lower() in s["railway_line"].lower()]
-    
-    # Apply pagination
-    sections = sections[skip: skip + limit]
-    
-    return [SectionResponse(**section) for section in sections]
+    # Use database-backed approach
+    async with AsyncSessionLocal() as session:
+        # Build query
+        stmt = select(Section)
+        
+        # Apply filters
+        if section_type:
+            stmt = stmt.where(Section.section_type.ilike(f"%{section_type}%"))
+        
+        if status:
+            stmt = stmt.where(Section.status.ilike(f"%{status}%"))
+        
+        # Apply pagination
+        stmt = stmt.offset(skip).limit(limit)
+        
+        # Execute query
+        result = await session.execute(stmt)
+        sections = result.scalars().all()
+        
+        # Convert to mock-style format for compatibility
+        section_responses = []
+        for section in sections:
+            section_data = {
+                "id": section.id,
+                "section_code": section.section_code,
+                "name": section.name or "",
+                "section_type": section.section_type,
+                "status": section.status,
+                "length_km": section.length_km,
+                "max_speed_kmh": section.max_speed_kmh,
+                "max_capacity": section.max_capacity,
+                "current_occupancy": 0,
+                "railway_line": "Main Line",
+                "maintenance_status": "GOOD",
+                "signal_state": "GREEN",
+                "created_at": section.created_at,
+                "updated_at": section.updated_at or section.created_at
+            }
+            section_responses.append(SectionResponse(**section_data))
+        
+        return section_responses
 
 
 @router.get("/{section_id}", response_model=SectionResponse)

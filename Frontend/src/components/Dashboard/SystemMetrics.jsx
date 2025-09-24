@@ -118,7 +118,7 @@ const SystemMetrics = ({ timeRange = '1h', refreshInterval = 5000 }) => {
           <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
           <div className="ml-3">
             <h3 className="text-sm font-medium text-red-800">Error loading system metrics</h3>
-            <p className="text-sm text-red-700 mt-1">{error}</p>
+            <p className="text-sm text-red-700 mt-1">{typeof error === 'string' ? error : JSON.stringify(error)}</p>
           </div>
         </div>
       </div>

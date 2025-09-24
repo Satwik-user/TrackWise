@@ -20,7 +20,7 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 
-class SectionService(BaseService[Section, SectionCreate, SectionUpdate]):
+class SectionService(BaseService[Section]):
     """Service for railway section management operations"""
     
     def __init__(self):

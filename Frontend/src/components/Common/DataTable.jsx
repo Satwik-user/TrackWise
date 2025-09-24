@@ -184,6 +184,11 @@ const DataTable = ({
       return typeof value === 'number' ? value.toLocaleString() : value;
     }
 
+    // Safe rendering for any value type, including objects
+    if (typeof value === 'object') {
+      return JSON.stringify(value);
+    }
+
     return value.toString();
   };
 
@@ -225,7 +230,7 @@ const DataTable = ({
   if (error) {
     return (
       <div className="text-center py-12">
-        <div className="text-red-600 text-sm">{error}</div>
+        <div className="text-red-600 text-sm">{typeof error === 'string' ? error : JSON.stringify(error)}</div>
       </div>
     );
   }

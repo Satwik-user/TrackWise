@@ -4,7 +4,28 @@ Section model
 
 from sqlalchemy import Column, Integer, String, Float, DateTime
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
+from enum import Enum
 from app.database import Base
+
+
+class SectionStatus(str, Enum):
+    """Section status enumeration"""
+    AVAILABLE = "AVAILABLE"
+    OCCUPIED = "OCCUPIED"
+    MAINTENANCE = "MAINTENANCE"
+    BLOCKED = "BLOCKED"
+    RESERVED = "RESERVED"
+
+
+class SectionType(str, Enum):
+    """Section type enumeration"""
+    MAIN_LINE = "MAIN_LINE"
+    BRANCH_LINE = "BRANCH_LINE"
+    JUNCTION = "JUNCTION"
+    TERMINAL = "TERMINAL"
+    YARD = "YARD"
+    DEPOT = "DEPOT"
 
 
 class Section(Base):
@@ -20,3 +41,6 @@ class Section(Base):
     max_capacity = Column(Integer, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    schedules = relationship("Schedule", back_populates="section")
