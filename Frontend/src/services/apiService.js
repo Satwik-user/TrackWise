@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { sanitizeApiResponse } from '../utils/dataSanitizer';
 
 // Configure axios defaults
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '';
 
 const api = axios.create({
   baseURL: API_BASE_URL,

@@ -9,7 +9,7 @@ import { WebSocketProvider } from './context/WebSocketContext';
 import Sidebar from './components/Layout/Sidebar';
 import Header from './components/Layout/Header';
 import ErrorBoundary from './components/Common/ErrorBoundary';
-import AutoLogin from './components/AutoLogin';
+// AutoLogin removed - users must log in manually
 
 // Page Components  
 import Dashboard from './pages/Dashboard';
@@ -48,7 +48,7 @@ function App() {
       const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
       if (token) {
         // Verify token with backend
-        const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+  const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
         try {
           const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
             headers: {
@@ -73,23 +73,10 @@ function App() {
         localStorage.removeItem('auth_token');
       }
       
-      // Auto login with admin credentials
-      console.log('Auto-logging in with admin credentials...');
-      const response = await authService.login({ username: 'admin', password: 'admin123' });
-      if (response && response.access_token) {
-        // Set user info (use mock user if not available)
-        const user = response.user || { 
-          id: 1, 
-          username: 'admin', 
-          email: 'admin@trackwise.com', 
-          role: 'administrator' 
-        };
-        setUser(user);
-        setIsAuthenticated(true);
-        console.log('Auto-login successful');
-      } else {
-        console.error('Auto-login failed: No access token received');
-      }
+      // Clear any existing tokens to force manual login
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('token');
+      console.log('Auto-login disabled - user must log in manually');
     } catch (error) {
       console.error('Authentication setup failed:', error);
       // Don't block the app, just proceed without authentication
@@ -189,9 +176,7 @@ function App() {
                   {/* Advanced Control Routes */}
                   <Route path="/simulation-control" element={
                     <ErrorBoundary fallbackMessage="Simulation Control is temporarily unavailable">
-                      <AutoLogin>
-                        <SimulationControlPanel />
-                      </AutoLogin>
+                      <SimulationControlPanel />
                     </ErrorBoundary>
                   } />
                   <Route path="/decision-support" element={

@@ -9,19 +9,10 @@ const AutoLogin = ({ children }) => {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        // Check if already authenticated
-        const existingToken = localStorage.getItem('auth_token');
-        if (existingToken) {
-          setIsAuthenticated(true);
-          setIsLoading(false);
-          return;
-        }
-
-        // Auto-login for development
-        console.log('Auto-logging in with default credentials...');
-        await authService.login({ username: 'admin', password: 'admin123' });
-        setIsAuthenticated(true);
-        console.log('Auto-login successful');
+        // Clear any existing tokens to force manual login
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('token');
+        setIsAuthenticated(false);
       } catch (err) {
         console.error('Auto-login failed:', err);
         setError(err.message);

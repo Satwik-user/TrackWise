@@ -4,6 +4,8 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: trackwise_postgres
+    env_file:
+      - .env.prod
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-trackwise}
       POSTGRES_USER: ${POSTGRES_USER:-trackwise}
@@ -33,6 +35,8 @@ services:
   redis:
     image: redis:7-alpine
     container_name: trackwise_redis
+    env_file:
+      - .env.prod
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
     ports:
       - "${REDIS_PORT:-6379}:6379"
@@ -54,6 +58,8 @@ services:
           memory: 128M
 
   backend:
+    env_file:
+      - .env.prod
     build:
       context: .
       dockerfile: Dockerfile.backend.prod
@@ -72,13 +78,16 @@ services:
       - uploads_data:/app/uploads
       - logs_data:/app/logs
       - ./railway_optimization.db:/app/railway_optimization.db
+      - ./.env.prod:/app/.env.prod:ro
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     networks:
-      - trackwise_network
+      trackwise_network:
+        aliases:
+          - backend
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
@@ -94,6 +103,8 @@ services:
           memory: 512M
 
   frontend:
+    env_file:
+      - .env.prod
     build:
       context: .
       dockerfile: Dockerfile.frontend.prod

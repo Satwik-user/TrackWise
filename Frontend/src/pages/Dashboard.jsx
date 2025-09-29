@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import DelayPredictionCard from '../components/Dashboard/DelayPredictionCard';
 import DisruptionAlertPanel from '../components/Dashboard/DisruptionAlertPanel';
 import EnhancedKPIPanel from '../components/Dashboard/EnhancedKPIPanel';
-import ControllerRecommendationsPanel from '../components/Dashboard/ControllerRecommendationsPanel';
+// import ControllerRecommendationsPanel from '../components/Dashboard/ControllerRecommendationsPanel';
 import AuditLogPanel from '../components/Dashboard/AuditLogPanel';
 import { apiService } from '../services/apiService';
 
@@ -99,8 +99,7 @@ const Dashboard = () => {
         {/* System-wide Risk Assessment */}
         <DisruptionAlertPanel className="lg:col-span-1" />
         
-        {/* Controller Recommendations - Spans remaining space */}
-        <ControllerRecommendationsPanel className="xl:col-span-1 lg:col-span-2" />
+  {/* Controller Recommendations removed as requested */}
       </div>
 
       {/* Middle Row - Comprehensive KPIs */}
